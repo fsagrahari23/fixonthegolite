@@ -237,8 +237,6 @@
     </div>
   </div>
 </div>
-
-<% const extraScripts = `
 <link
   rel="stylesheet"
   href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"
@@ -246,137 +244,175 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener("DOMContentLoaded", function () {
     // Default coordinates for India if location is not available
     const DEFAULT_LAT = 20.5937;
     const DEFAULT_LNG = 78.9629;
 
     // Initialize map with default coordinates
-    const locationMap = L.map('location-map').setView([DEFAULT_LAT, DEFAULT_LNG], 5);
+    const locationMap = L.map("location-map").setView(
+      [DEFAULT_LAT, DEFAULT_LNG],
+      5
+    );
     let towingMap;
     let marker;
     let pickupMarker;
     let dropoffMarker;
     let routeLine;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(locationMap);
 
     // Form validation
-    document.getElementById('booking-form').addEventListener('submit', function(e) {
-      const lat = document.getElementById('latitude').value;
-      const lng = document.getElementById('longitude').value;
-      const requiresTowing = document.getElementById('requiresTowing').checked;
+    document
+      .getElementById("booking-form")
+      .addEventListener("submit", function (e) {
+        const lat = document.getElementById("latitude").value;
+        const lng = document.getElementById("longitude").value;
+        const requiresTowing =
+          document.getElementById("requiresTowing").checked;
 
-      // Validate main location
-      if (!lat || !lng || lat === '0' || lng === '0') {
-        e.preventDefault();
-        document.getElementById('location-error').classList.remove('d-none');
-        window.scrollTo({
-          top: document.getElementById('location-error').offsetTop - 100,
-          behavior: 'smooth'
-        });
-        return false;
-      }
-
-      // Validate towing details if towing is required
-      if (requiresTowing) {
-        const dropoffLat = document.getElementById('dropoffLatitude').value;
-        const dropoffLng = document.getElementById('dropoffLongitude').value;
-
-        if (!dropoffLat || !dropoffLng || dropoffLat === '0' || dropoffLng === '0') {
+        // Validate main location
+        if (!lat || !lng || lat === "0" || lng === "0") {
           e.preventDefault();
-          document.getElementById('dropoff-error').classList.remove('d-none');
+          document.getElementById("location-error").classList.remove("d-none");
           window.scrollTo({
-            top: document.getElementById('dropoff-error').offsetTop - 100,
-            behavior: 'smooth'
+            top: document.getElementById("location-error").offsetTop - 100,
+            behavior: "smooth",
           });
           return false;
         }
-      }
 
-      return true;
-    });
+        // Validate towing details if towing is required
+        if (requiresTowing) {
+          const dropoffLat = document.getElementById("dropoffLatitude").value;
+          const dropoffLng = document.getElementById("dropoffLongitude").value;
+
+          if (
+            !dropoffLat ||
+            !dropoffLng ||
+            dropoffLat === "0" ||
+            dropoffLng === "0"
+          ) {
+            e.preventDefault();
+            document.getElementById("dropoff-error").classList.remove("d-none");
+            window.scrollTo({
+              top: document.getElementById("dropoff-error").offsetTop - 100,
+              behavior: "smooth",
+            });
+            return false;
+          }
+        }
+
+        return true;
+      });
 
     // Get current location button
-    document.getElementById('get-location-btn').addEventListener('click', function() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
+    document
+      .getElementById("get-location-btn")
+      .addEventListener("click", function () {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            function (position) {
+              const lat = position.coords.latitude;
+              const lng = position.coords.longitude;
 
-          if (isValidCoordinates(lat, lng)) {
-            document.getElementById('latitude').value = lat;
-            document.getElementById('longitude').value = lng;
-            document.getElementById('location-error').classList.add('d-none');
+              if (isValidCoordinates(lat, lng)) {
+                document.getElementById("latitude").value = lat;
+                document.getElementById("longitude").value = lng;
+                document
+                  .getElementById("location-error")
+                  .classList.add("d-none");
 
-            // Update map
-            locationMap.setView([lat, lng], 15);
+                // Update map
+                locationMap.setView([lat, lng], 15);
 
-            if (marker) {
-              marker.setLatLng([lat, lng]);
-            } else {
-              marker = L.marker([lat, lng], {draggable: true}).addTo(locationMap);
-              marker.on('dragend', function(e) {
-                const position = marker.getLatLng();
-                if (isValidCoordinates(position.lat, position.lng)) {
-                  document.getElementById('latitude').value = position.lat;
-                  document.getElementById('longitude').value = position.lng;
-                  document.getElementById('location-error').classList.add('d-none');
-                  // Get address from coordinates
-                  reverseGeocode(position.lat, position.lng, function(address) {
-                    if (address) {
-                      document.getElementById('address').value = address;
+                if (marker) {
+                  marker.setLatLng([lat, lng]);
+                } else {
+                  marker = L.marker([lat, lng], { draggable: true }).addTo(
+                    locationMap
+                  );
+                  marker.on("dragend", function (e) {
+                    const position = marker.getLatLng();
+                    if (isValidCoordinates(position.lat, position.lng)) {
+                      document.getElementById("latitude").value = position.lat;
+                      document.getElementById("longitude").value = position.lng;
+                      document
+                        .getElementById("location-error")
+                        .classList.add("d-none");
+                      // Get address from coordinates
+                      reverseGeocode(
+                        position.lat,
+                        position.lng,
+                        function (address) {
+                          if (address) {
+                            document.getElementById("address").value = address;
+                          }
+                        }
+                      );
                     }
                   });
                 }
-              });
-            }
 
-            // Get address from coordinates
-            reverseGeocode(lat, lng, function(address) {
-              if (address) {
-                document.getElementById('address').value = address;
-                // Also update pickup address for towing
-                document.getElementById('pickupAddress').value = address;
-                document.getElementById('pickupLatitude').value = lat;
-                document.getElementById('pickupLongitude').value = lng;
-                if (pickupMarker && towingMap) {
-                  pickupMarker.setLatLng([lat, lng]);
-                  updateTowingRoute();
-                }
+                // Get address from coordinates
+                reverseGeocode(lat, lng, function (address) {
+                  if (address) {
+                    document.getElementById("address").value = address;
+                    // Also update pickup address for towing
+                    document.getElementById("pickupAddress").value = address;
+                    document.getElementById("pickupLatitude").value = lat;
+                    document.getElementById("pickupLongitude").value = lng;
+                    if (pickupMarker && towingMap) {
+                      pickupMarker.setLatLng([lat, lng]);
+                      updateTowingRoute();
+                    }
+                  }
+                });
+              } else {
+                showNotification(
+                  "Invalid coordinates received. Please try again or enter location manually.",
+                  "warning"
+                );
               }
-            });
-          } else {
-            showNotification('Invalid coordinates received. Please try again or enter location manually.', 'warning');
-          }
-        }, function(error) {
-          console.error('Geolocation error:', error);
-          showNotification('Could not get your location. Please enter it manually.', 'warning');
-        });
-      } else {
-        showNotification('Geolocation is not supported by your browser.', 'warning');
-      }
-    });
+            },
+            function (error) {
+              console.error("Geolocation error:", error);
+              showNotification(
+                "Could not get your location. Please enter it manually.",
+                "warning"
+              );
+            }
+          );
+        } else {
+          showNotification(
+            "Geolocation is not supported by your browser.",
+            "warning"
+          );
+        }
+      });
 
     // Initialize map with user's saved location if available
-    const userLat = parseFloat(document.getElementById('latitude').value);
-    const userLng = parseFloat(document.getElementById('longitude').value);
+    const userLat = parseFloat(document.getElementById("latitude").value);
+    const userLng = parseFloat(document.getElementById("longitude").value);
 
     if (isValidCoordinates(userLat, userLng)) {
       locationMap.setView([userLat, userLng], 15);
-      marker = L.marker([userLat, userLng], {draggable: true}).addTo(locationMap);
-      marker.on('dragend', function(e) {
+      marker = L.marker([userLat, userLng], { draggable: true }).addTo(
+        locationMap
+      );
+      marker.on("dragend", function (e) {
         const position = marker.getLatLng();
         if (isValidCoordinates(position.lat, position.lng)) {
-          document.getElementById('latitude').value = position.lat;
-          document.getElementById('longitude').value = position.lng;
-          document.getElementById('location-error').classList.add('d-none');
+          document.getElementById("latitude").value = position.lat;
+          document.getElementById("longitude").value = position.lng;
+          document.getElementById("location-error").classList.add("d-none");
           // Get address from coordinates
-          reverseGeocode(position.lat, position.lng, function(address) {
+          reverseGeocode(position.lat, position.lng, function (address) {
             if (address) {
-              document.getElementById('address').value = address;
+              document.getElementById("address").value = address;
             }
           });
         }
@@ -384,177 +420,212 @@
     } else {
       // Try to get user's current location
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
 
-          if (isValidCoordinates(lat, lng)) {
-            document.getElementById('latitude').value = lat;
-            document.getElementById('longitude').value = lng;
-            locationMap.setView([lat, lng], 15);
-            marker = L.marker([lat, lng], {draggable: true}).addTo(locationMap);
-            marker.on('dragend', function(e) {
-              const position = marker.getLatLng();
-              if (isValidCoordinates(position.lat, position.lng)) {
-                document.getElementById('latitude').value = position.lat;
-                document.getElementById('longitude').value = position.lng;
-                document.getElementById('location-error').classList.add('d-none');
-              }
-            });
-            if (!document.getElementById('address').value) {
-              reverseGeocode(lat, lng, function(address) {
-                if (address) {
-                  document.getElementById('address').value = address;
+            if (isValidCoordinates(lat, lng)) {
+              document.getElementById("latitude").value = lat;
+              document.getElementById("longitude").value = lng;
+              locationMap.setView([lat, lng], 15);
+              marker = L.marker([lat, lng], { draggable: true }).addTo(
+                locationMap
+              );
+              marker.on("dragend", function (e) {
+                const position = marker.getLatLng();
+                if (isValidCoordinates(position.lat, position.lng)) {
+                  document.getElementById("latitude").value = position.lat;
+                  document.getElementById("longitude").value = position.lng;
+                  document
+                    .getElementById("location-error")
+                    .classList.add("d-none");
                 }
               });
+              if (!document.getElementById("address").value) {
+                reverseGeocode(lat, lng, function (address) {
+                  if (address) {
+                    document.getElementById("address").value = address;
+                  }
+                });
+              }
             }
+          },
+          function (error) {
+            console.error("Geolocation error:", error);
+            locationMap.setView([DEFAULT_LAT, DEFAULT_LNG], 5);
           }
-        }, function(error) {
-          console.error('Geolocation error:', error);
-          locationMap.setView([DEFAULT_LAT, DEFAULT_LNG], 5);
-        });
+        );
       } else {
         locationMap.setView([DEFAULT_LAT, DEFAULT_LNG], 5);
       }
     }
 
     // Handle address input change
-    document.getElementById('address').addEventListener('change', function() {
+    document.getElementById("address").addEventListener("change", function () {
       const address = this.value;
       if (address) {
-        geocodeAddress(address, function(lat, lng) {
+        geocodeAddress(address, function (lat, lng) {
           if (isValidCoordinates(lat, lng)) {
-            document.getElementById('latitude').value = lat;
-            document.getElementById('longitude').value = lng;
-            document.getElementById('location-error').classList.add('d-none');
+            document.getElementById("latitude").value = lat;
+            document.getElementById("longitude").value = lng;
+            document.getElementById("location-error").classList.add("d-none");
             locationMap.setView([lat, lng], 15);
             if (marker) {
               marker.setLatLng([lat, lng]);
             } else {
-              marker = L.marker([lat, lng], {draggable: true}).addTo(locationMap);
-              marker.on('dragend', function(e) {
+              marker = L.marker([lat, lng], { draggable: true }).addTo(
+                locationMap
+              );
+              marker.on("dragend", function (e) {
                 const position = marker.getLatLng();
                 if (isValidCoordinates(position.lat, position.lng)) {
-                  document.getElementById('latitude').value = position.lat;
-                  document.getElementById('longitude').value = position.lng;
-                  document.getElementById('location-error').classList.add('d-none');
+                  document.getElementById("latitude").value = position.lat;
+                  document.getElementById("longitude").value = position.lng;
+                  document
+                    .getElementById("location-error")
+                    .classList.add("d-none");
                 }
               });
             }
           } else {
-            document.getElementById('location-error').classList.remove('d-none');
+            document
+              .getElementById("location-error")
+              .classList.remove("d-none");
           }
         });
       }
     });
 
     // Handle towing checkbox
-    document.getElementById('requiresTowing').addEventListener('change', function() {
-      const towingDetails = document.getElementById('towing-details');
-      if (this.checked) {
-        towingDetails.classList.remove('d-none');
-        if (!towingMap) {
-          towingMap = L.map('towing-map').setView([DEFAULT_LAT, DEFAULT_LNG], 5);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          }).addTo(towingMap);
-          const lat = document.getElementById('latitude').value;
-          const lng = document.getElementById('longitude').value;
-          if (isValidCoordinates(lat, lng)) {
-            towingMap.setView([lat, lng], 13);
-            pickupMarker = L.marker([lat, lng], {
-              icon: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34]
-              })
-            }).addTo(towingMap).bindPopup('Pickup Location');
-            document.getElementById('pickupLatitude').value = lat;
-            document.getElementById('pickupLongitude').value = lng;
-            document.getElementById('pickupAddress').value = document.getElementById('address').value;
-          }
-        }
-      } else {
-        towingDetails.classList.add('d-none');
-      }
-    });
-
-    // Handle pickup address input
-    document.getElementById('pickupAddress').addEventListener('change', function() {
-      const address = this.value;
-      if (address && towingMap) {
-        geocodeAddress(address, function(lat, lng) {
-          if (isValidCoordinates(lat, lng)) {
-            document.getElementById('pickupLatitude').value = lat;
-            document.getElementById('pickupLongitude').value = lng;
-            if (pickupMarker) {
-              pickupMarker.setLatLng([lat, lng]);
-            } else {
+    document
+      .getElementById("requiresTowing")
+      .addEventListener("change", function () {
+        const towingDetails = document.getElementById("towing-details");
+        if (this.checked) {
+          towingDetails.classList.remove("d-none");
+          if (!towingMap) {
+            towingMap = L.map("towing-map").setView(
+              [DEFAULT_LAT, DEFAULT_LNG],
+              5
+            );
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            }).addTo(towingMap);
+            const lat = document.getElementById("latitude").value;
+            const lng = document.getElementById("longitude").value;
+            if (isValidCoordinates(lat, lng)) {
+              towingMap.setView([lat, lng], 13);
               pickupMarker = L.marker([lat, lng], {
                 icon: L.icon({
-                  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                  iconUrl:
+                    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
                   iconSize: [25, 41],
                   iconAnchor: [12, 41],
-                  popupAnchor: [1, -34]
-                })
-              }).addTo(towingMap).bindPopup('Pickup Location');
+                  popupAnchor: [1, -34],
+                }),
+              })
+                .addTo(towingMap)
+                .bindPopup("Pickup Location");
+              document.getElementById("pickupLatitude").value = lat;
+              document.getElementById("pickupLongitude").value = lng;
+              document.getElementById("pickupAddress").value =
+                document.getElementById("address").value;
             }
-            updateTowingRoute();
           }
-        });
-      }
-    });
+        } else {
+          towingDetails.classList.add("d-none");
+        }
+      });
+
+    // Handle pickup address input
+    document
+      .getElementById("pickupAddress")
+      .addEventListener("change", function () {
+        const address = this.value;
+        if (address && towingMap) {
+          geocodeAddress(address, function (lat, lng) {
+            if (isValidCoordinates(lat, lng)) {
+              document.getElementById("pickupLatitude").value = lat;
+              document.getElementById("pickupLongitude").value = lng;
+              if (pickupMarker) {
+                pickupMarker.setLatLng([lat, lng]);
+              } else {
+                pickupMarker = L.marker([lat, lng], {
+                  icon: L.icon({
+                    iconUrl:
+                      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                  }),
+                })
+                  .addTo(towingMap)
+                  .bindPopup("Pickup Location");
+              }
+              updateTowingRoute();
+            }
+          });
+        }
+      });
 
     // Handle dropoff address input
-    document.getElementById('dropoffAddress').addEventListener('change', function() {
-      const address = this.value;
-      if (address && towingMap) {
-        geocodeAddress(address, function(lat, lng) {
-          if (isValidCoordinates(lat, lng)) {
-            document.getElementById('dropoffLatitude').value = lat;
-            document.getElementById('dropoffLongitude').value = lng;
-            document.getElementById('dropoff-error').classList.add('d-none');
-            if (dropoffMarker) {
-              dropoffMarker.setLatLng([lat, lng]);
-            } else {
-              dropoffMarker = L.marker([lat, lng], {
-                icon: L.icon({
-                  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                  iconSize: [25, 41],
-                  iconAnchor: [12, 41],
-                  popupAnchor: [1, -34]
+    document
+      .getElementById("dropoffAddress")
+      .addEventListener("change", function () {
+        const address = this.value;
+        if (address && towingMap) {
+          geocodeAddress(address, function (lat, lng) {
+            if (isValidCoordinates(lat, lng)) {
+              document.getElementById("dropoffLatitude").value = lat;
+              document.getElementById("dropoffLongitude").value = lng;
+              document.getElementById("dropoff-error").classList.add("d-none");
+              if (dropoffMarker) {
+                dropoffMarker.setLatLng([lat, lng]);
+              } else {
+                dropoffMarker = L.marker([lat, lng], {
+                  icon: L.icon({
+                    iconUrl:
+                      "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                  }),
                 })
-              }).addTo(towingMap).bindPopup('Dropoff Location');
+                  .addTo(towingMap)
+                  .bindPopup("Dropoff Location");
+              }
+              updateTowingRoute();
+            } else {
+              document
+                .getElementById("dropoff-error")
+                .classList.remove("d-none");
             }
-            updateTowingRoute();
-          } else {
-            document.getElementById('dropoff-error').classList.remove('d-none');
-          }
-        });
-      }
-    });
+          });
+        }
+      });
 
     // Handle image preview
-    document.getElementById('images').addEventListener('change', function() {
-      const previewContainer = document.getElementById('image-preview');
-      previewContainer.innerHTML = '';
+    document.getElementById("images").addEventListener("change", function () {
+      const previewContainer = document.getElementById("image-preview");
+      previewContainer.innerHTML = "";
       if (this.files) {
         for (let i = 0; i < this.files.length; i++) {
           const file = this.files[i];
-          if (file.type.match('image.*')) {
+          if (file.type.match("image.*")) {
             const reader = new FileReader();
-            reader.onload = function(e) {
-              const col = document.createElement('div');
-              col.className = 'col-4 col-md-3';
-              const img = document.createElement('img');
+            reader.onload = function (e) {
+              const col = document.createElement("div");
+              col.className = "col-4 col-md-3";
+              const img = document.createElement("img");
               img.src = e.target.result;
-              img.className = 'img-thumbnail';
-              img.style.height = '100px';
-              img.style.objectFit = 'cover';
+              img.className = "img-thumbnail";
+              img.style.height = "100px";
+              img.style.objectFit = "cover";
               col.appendChild(img);
               previewContainer.appendChild(col);
-            }
+            };
             reader.readAsDataURL(file);
           }
         }
@@ -563,16 +634,28 @@
 
     // Helper functions
     function isValidCoordinates(lat, lng) {
-      return lat && lng && !isNaN(lat) && !isNaN(lng) &&
-             lat !== 0 && lng !== 0 &&
-             lat >= -90 && lat <= 90 &&
-             lng >= -180 && lng <= 180;
+      return (
+        lat &&
+        lng &&
+        !isNaN(lat) &&
+        !isNaN(lng) &&
+        lat !== 0 &&
+        lng !== 0 &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lng >= -180 &&
+        lng <= 180
+      );
     }
 
     function geocodeAddress(address, callback) {
-      fetch(\`https://nominatim.openstreetmap.org/search?format=json&q=\${encodeURIComponent(address)}\`)
-        .then(response => response.json())
-        .then(data => {
+      fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          address
+        )}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
           if (data.length > 0) {
             const lat = parseFloat(data[0].lat);
             const lng = parseFloat(data[0].lon);
@@ -581,24 +664,26 @@
             callback(null, null);
           }
         })
-        .catch(error => {
-          console.error('Error geocoding address:', error);
+        .catch((error) => {
+          console.error("Error geocoding address:", error);
           callback(null, null);
         });
     }
 
     function reverseGeocode(lat, lng, callback) {
-      fetch(\`https://nominatim.openstreetmap.org/reverse?format=json&lat=\${lat}&lon=\${lng}\`)
-        .then(response => response.json())
-        .then(data => {
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
           if (data.display_name) {
             callback(data.display_name);
           } else {
             callback(null);
           }
         })
-        .catch(error => {
-          console.error('Error getting address:', error);
+        .catch((error) => {
+          console.error("Error getting address:", error);
           callback(null);
         });
     }
@@ -610,30 +695,33 @@
         if (routeLine) {
           towingMap.removeLayer(routeLine);
         }
-        routeLine = L.polyline([
-          [pickupLatLng.lat, pickupLatLng.lng],
-          [dropoffLatLng.lat, dropoffLatLng.lng]
-        ], {color: 'blue', dashArray: '5, 10'}).addTo(towingMap);
+        routeLine = L.polyline(
+          [
+            [pickupLatLng.lat, pickupLatLng.lng],
+            [dropoffLatLng.lat, dropoffLatLng.lng],
+          ],
+          { color: "blue", dashArray: "5, 10" }
+        ).addTo(towingMap);
         towingMap.fitBounds([
           [pickupLatLng.lat, pickupLatLng.lng],
-          [dropoffLatLng.lat, dropoffLatLng.lng]
+          [dropoffLatLng.lat, dropoffLatLng.lng],
         ]);
       }
     }
 
     function showNotification(message, type) {
-      const notification = document.createElement('div');
-      notification.className = \`alert alert-\${type} alert-dismissible fade show position-fixed\`;
-      notification.style.top = '20px';
-      notification.style.right = '20px';
-      notification.style.zIndex = '9999';
-      notification.innerHTML = \`
-        \${message}
+      const notification = document.createElement("div");
+      notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+      notification.style.top = "20px";
+      notification.style.right = "20px";
+      notification.style.zIndex = "9999";
+      notification.innerHTML = `
+        ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      \`;
+      `;
       document.body.appendChild(notification);
       setTimeout(() => {
-        notification.classList.remove('show');
+        notification.classList.remove("show");
         setTimeout(() => {
           document.body.removeChild(notification);
         }, 150);
@@ -641,4 +729,3 @@
     }
   });
 </script>
-` %> <%- extraScripts %>

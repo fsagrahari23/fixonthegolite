@@ -72,7 +72,7 @@ router.post("/book", async (req, res) => {
       dropoffLongitude,
     } = req.body;
 
-    console.log(req.body);
+    // console.log(req.body);
 
     // Basic validation for main booking fields
     if (
