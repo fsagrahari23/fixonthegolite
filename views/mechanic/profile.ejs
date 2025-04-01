@@ -1,0 +1,371 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/mechanic/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">My Profile</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4 mb-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center p-4">
+          <div class="avatar-circle-large bg-primary text-white mx-auto mb-3">
+            <%= user.name.charAt(0).toUpperCase() %>
+          </div>
+          <h4 class="mb-1"><%= user.name %></h4>
+          <p class="text-muted mb-3"><%= user.email %></p>
+          
+          <div class="d-flex justify-content-center mb-3">
+            <span class="badge bg-success rounded-pill px-3 py-2">
+              <i class="fas fa-tools me-1"></i> Mechanic
+            </span>
+            <span class="badge bg-<%= profile.availability ? 'success' : 'danger' %> rounded-pill px-3 py-2 ms-2">
+              <%= profile.availability ? 'Available' : 'Unavailable' %>
+            </span>
+          </div>
+          
+          <div class="d-flex justify-content-center mb-3">
+            <% for(let i = 0; i < 5; i++) { %>
+              <i class="fas fa-star <%= i < Math.round(profile.rating) ? 'text-warning' : 'text-muted' %> mx-1"></i>
+            <% } %>
+            <span class="ms-1">(<%= profile.rating.toFixed(1) %>)</span>
+          </div>
+          
+          <div class="border-top pt-3 mt-3">
+            <div class="row text-start">
+              <div class="col-6 mb-2">
+                <p class="text-muted mb-1 small">Member Since</p>
+                <p class="mb-0 fw-bold"><%= new Date(user.createdAt).toLocaleDateString() %></p>
+              </div>
+              <div class="col-6 mb-2">
+                <p class="text-muted mb-1 small">Total Jobs</p>
+                <p class="mb-0 fw-bold" id="totalJobs">Loading...</p>
+              </div>
+              <div class="col-6 mb-2">
+                <p class="text-muted mb-1 small">Experience</p>
+                <p class="mb-0 fw-bold"><%= profile.experience %> years</p>
+              </div>
+              <div class="col-6 mb-2">
+                <p class="text-muted mb-1 small">Hourly Rate</p>
+                <p class="mb-0 fw-bold text-success">$<%= profile.hourlyRate %></p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="mt-3">
+            <form action="/mechanic/toggle-availability" method="POST">
+              <button type="submit" class="btn btn-<%= profile.availability ? 'danger' : 'success' %> w-100">
+                <i class="fas fa-<%= profile.availability ? 'times-circle' : 'check-circle' %> me-2"></i>
+                <%= profile.availability ? 'Set as Unavailable' : 'Set as Available' %>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-map-marker-alt text-primary me-2"></i>Your Location</h5>
+        </div>
+        <div class="card-body p-0">
+          <div id="mechanic-map" style="height: 250px;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-user-edit text-primary me-2"></i>Edit Profile</h5>
+        </div>
+        <div class="card-body p-4">
+          <form action="/mechanic/profile" method="POST">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label">Full Name</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-user"></i></span>
+                  <input type="text" class="form-control" id="name" name="name" value="<%= user.name %>" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="email" class="form-label">Email Address</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                  <input type="email" class="form-control" id="email" value="<%= user.email %>" disabled>
+                </div>
+                <div class="form-text">Email cannot be changed</div>
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="phone" class="form-label">Phone Number</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                  <input type="tel" class="form-control" id="phone" name="phone" value="<%= user.phone %>" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="address" class="form-label">Address</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                  <input type="text" class="form-control" id="address" name="address" value="<%= user.address %>" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="specialization" class="form-label">Specialization</label>
+                <select class="form-select" id="specialization" name="specialization" multiple required>
+                  <option value="Engine Repair" <%= profile.specialization.includes('Engine Repair') ? 'selected' : '' %>>Engine Repair</option>
+                  <option value="Brake Systems" <%= profile.specialization.includes('Brake Systems') ? 'selected' : '' %>>Brake Systems</option>
+                  <option value="Electrical Systems" <%= profile.specialization.includes('Electrical Systems') ? 'selected' : '' %>>Electrical Systems</option>
+                  <option value="Transmission" <%= profile.specialization.includes('Transmission') ? 'selected' : '' %>>Transmission</option>
+                  <option value="Tire Services" <%= profile.specialization.includes('Tire Services') ? 'selected' : '' %>>Tire Services</option>
+                  <option value="Battery Services" <%= profile.specialization.includes('Battery Services') ? 'selected' : '' %>>Battery Services</option>
+                  <option value="General Maintenance" <%= profile.specialization.includes('General Maintenance') ? 'selected' : '' %>>General Maintenance</option>
+                </select>
+                <div class="form-text">Hold Ctrl/Cmd to select multiple specializations</div>
+              </div>
+              <div class="col-md-6">
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="experience" class="form-label">Experience (Years)</label>
+                    <input type="number" class="form-control" id="experience" name="experience" min="0" value="<%= profile.experience %>" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="hourlyRate" class="form-label">Hourly Rate ($)</label>
+                    <input type="number" class="form-control" id="hourlyRate" name="hourlyRate" min="0" step="0.01" value="<%= profile.hourlyRate %>" required>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-4">
+              <label class="form-label">Update Location</label>
+              <div id="update-map" style="height: 300px; border-radius: 10px;"></div>
+              <input type="hidden" id="latitude" name="latitude" value="<%= user.location.coordinates[1] %>">
+              <input type="hidden" id="longitude" name="longitude" value="<%= user.location.coordinates[0] %>">
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i> Save Changes
+              </button>
+              <a href="/mechanic/dashboard" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-lock text-primary me-2"></i>Change Password</h5>
+        </div>
+        <div class="card-body p-4">
+          <form action="/mechanic/change-password" method="POST">
+            <div class="mb-3">
+              <label for="currentPassword" class="form-label">Current Password</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="newPassword" class="form-label">New Password</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-key"></i></span>
+                  <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="fas fa-key"></i></span>
+                  <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-key me-2"></i> Update Password
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-certificate text-primary me-2"></i>Certifications</h5>
+        </div>
+        <div class="card-body p-4">
+          <% if (profile.certifications && profile.certifications.length > 0) { %>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Certification</th>
+                    <th>Issuer</th>
+                    <th>Year</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% profile.certifications.forEach(cert => { %>
+                    <tr>
+                      <td><%= cert.name %></td>
+                      <td><%= cert.issuer %></td>
+                      <td><%= cert.year %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="text-center py-4">
+              <p class="text-muted mb-0">No certifications added yet.</p>
+            </div>
+          <% } %>
+          
+          <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addCertificationModal">
+            <i class="fas fa-plus me-2"></i> Add Certification
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Certification Modal -->
+<div class="modal fade" id="addCertificationModal" tabindex="-1" aria-labelledby="addCertificationModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addCertificationModalLabel">Add Certification</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="/mechanic/add-certification" method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="certName" class="form-label">Certification Name</label>
+            <input type="text" class="form-control" id="certName" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="certIssuer" class="form-label">Issuer</label>
+            <input type="text" class="form-control" id="certIssuer" name="issuer" required>
+          </div>
+          <div class="mb-3">
+            <label for="certYear" class="form-label">Year</label>
+            <input type="number" class="form-control" id="certYear" name="year" min="1900" max="<%= new Date().getFullYear() %>" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Certification</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<% const extraScripts = `
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Fetch total jobs
+    fetch('/mechanic/api/bookings/count')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('totalJobs').textContent = data.count || 0;
+      })
+      .catch(error => {
+        console.error('Error fetching booking count:', error);
+        document.getElementById('totalJobs').textContent = '0';
+      });
+    
+    // Initialize current location map
+    const mechanicMap = L.map('mechanic-map').setView([
+      ${user.location.coordinates[1] || 0}, 
+      ${user.location.coordinates[0] || 0}
+    ], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(mechanicMap);
+    
+    // Add marker for current location
+    L.marker([
+      ${user.location.coordinates[1] || 0}, 
+      ${user.location.coordinates[0] || 0}
+    ]).addTo(mechanicMap)
+      .bindPopup('Your current location')
+      .openPopup();
+    
+    // Initialize update location map
+    const updateMap = L.map('update-map').setView([
+      ${user.location.coordinates[1] || 0}, 
+      ${user.location.coordinates[0] || 0}
+    ], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(updateMap);
+    
+    // Add draggable marker for updating location
+    const marker = L.marker([
+      ${user.location.coordinates[1] || 0}, 
+      ${user.location.coordinates[0] || 0}
+    ], { draggable: true }).addTo(updateMap);
+    
+    marker.on('dragend', function(e) {
+      const position = marker.getLatLng();
+      document.getElementById('latitude').value = position.lat;
+      document.getElementById('longitude').value = position.lng;
+      
+      // Try to get address from coordinates
+      fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + position.lat + '&lon=' + position.lng)
+        .then(response => response.json())
+        .then(data => {
+          if (data.display_name) {
+            document.getElementById('address').value = data.display_name;
+          }
+        })
+        .catch(error => console.error('Error getting address:', error));
+    });
+    
+    // Update marker when address changes
+    document.getElementById('address').addEventListener('change', function() {
+      const address = this.value;
+      
+      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address))
+        .then(response => response.json())
+        .then(data => {
+          if (data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+            
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            
+            updateMap.setView([lat, lng], 15);
+            marker.setLatLng([lat, lng]);
+          }
+        })
+        .catch(error => console.error('Error geocoding address:', error));
+    });
+  });
+</script>
+` %>

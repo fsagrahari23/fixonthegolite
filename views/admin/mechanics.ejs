@@ -1,0 +1,492 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Manage Mechanics</li>
+        </ol>
+      </nav>
+      
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-0"><i class="fas fa-tools text-primary me-2"></i>Manage Mechanics</h1>
+      </div>
+    </div>
+  </div>
+  
+  <% if (pendingMechanics.length > 0) { %>
+    <div class="row mb-4">
+      <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Pending Approvals</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Experience</th>
+                    <th>Specialization</th>
+                    <th>Joined Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% pendingMechanics.forEach(mechanic => { %>
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-warning text-dark me-2">
+                            <%= mechanic.name.charAt(0).toUpperCase() %>
+                          </div>
+                          <span><%= mechanic.name %></span>
+                        </div>
+                      </td>
+                      <td><%= mechanic.email %></td>
+                      <td><%= mechanic.phone %></td>
+                      <td><%= mechanic ? mechanic.experience + ' years' : 'N/A' %></td>
+                      <td>
+                        <% if (mechanic && mechanic.specialization) { %>
+                          <% mechanic.specialization.slice(0, 2).forEach(spec => { %>
+                            <span class="badge bg-info me-1"><%= spec %></span>
+                          <% }) %>
+                          <% if (mechanic.specialization.length > 2) { %>
+                            <span class="badge bg-secondary">+<%= mechanic.specialization.length - 2 %> more</span>
+                          <% } %>
+                        <% } else { %>
+                          <span class="text-muted">N/A</span>
+                        <% } %>
+                      </td>
+                      <td><%= new Date(mechanic.createdAt).toLocaleDateString() %></td>
+                      <td>
+                        <div class="btn-group">
+                          <a href="/admin/mechanic/<%= mechanic._id %>" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i> View
+                          </a>
+                          <form action="/admin/mechanic/<%= mechanic._id %>/approve" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-success">
+                              <i class="fas fa-check"></i> Approve
+                            </button>
+                          </form>
+                          <form action="/admin/mechanic/<%= mechanic._id %>/reject" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to reject this mechanic?')">
+                              <i class="fas fa-times"></i> Reject
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+  
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h5 class="mb-0"><i class="fas fa-filter text-primary me-2"></i>Filter Mechanics</h5>
+            </div>
+            <div class="col-md-4">
+              <div class="input-group">
+                <input type="text" class="form-control" id="searchMechanic" placeholder="Search mechanics...">
+                <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label for="availabilityFilter" class="form-label">Availability</label>
+              <select class="form-select" id="availabilityFilter">
+                <option value="all">All</option>
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="specializationFilter" class="form-label">Specialization</label>
+              <select class="form-select" id="specializationFilter">
+                <option value="all">All Specializations</option>
+                <option value="Engine Repair">Engine Repair</option>
+                <option value="Brake Systems">Brake Systems</option>
+                <option value="Electrical Systems">Electrical Systems</option>
+                <option value="Transmission">Transmission</option>
+                <option value="Tire Services">Tire Services</option>
+                <option value="Battery Services">Battery Services</option>
+                <option value="General Maintenance">General Maintenance</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="experienceFilter" class="form-label">Experience</label>
+              <select class="form-select" id="experienceFilter">
+                <option value="all">All Experience</option>
+                <option value="0-2">0-2 years</option>
+                <option value="3-5">3-5 years</option>
+                <option value="6-10">6-10 years</option>
+                <option value="10+">10+ years</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="ratingFilter" class="form-label">Rating</label>
+              <select class="form-select" id="ratingFilter">
+                <option value="all">All Ratings</option>
+                <option value="4+">4+ Stars</option>
+                <option value="3+">3+ Stars</option>
+                <option value="2+">2+ Stars</option>
+                <option value="1+">1+ Stars</option>
+              </select>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary" id="applyFilters">
+              <i class="fas fa-filter me-2"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>Approved Mechanics</h5>
+          <span class="badge bg-success rounded-pill"><%= approvedMechanics.length %> Mechanics</span>
+        </div>
+        <div class="card-body p-0">
+          <% if (approvedMechanics.length === 0) { %>
+            <div class="text-center py-5">
+              <img src="/images/empty-mechanics.png" alt="No Mechanics" class="img-fluid mb-3" style="max-width: 200px;">
+              <h5>No approved mechanics found</h5>
+              <p class="text-muted">There are no approved mechanics in the system yet.</p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle" id="mechanicsTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Experience</th>
+                    <th>Rating</th>
+                    <th>Availability</th>
+                    <th>Jobs</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% approvedMechanics.forEach(mechanic => { %>
+                    <tr 
+                      data-experience="<%= mechanic ? mechanic.experience : 0 %>"
+                      data-rating="<%= mechanic ? mechanic.rating : 0 %>"
+                      data-availability="<%= mechanic && mechanic.availability ? 'available' : 'unavailable' %>"
+                      data-specialization="<%= mechanic && mechanic.specialization ? mechanic.specialization.join(',') : '' %>"
+                    >
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-success text-white me-2">
+                            <%= mechanic.user.name.charAt(0).toUpperCase() %>
+                          </div>
+                          <span><%= mechanic.user.name %></span>
+                        </div>
+                      </td>
+                      <td><%= mechanic.user.email %></td>
+                      <td><%= mechanic.user.phone %></td>
+                      <td><%= mechanic ? mechanic.experience + ' years' : 'N/A' %></td>
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <% for(let i = 0; i < 5; i++) { %>
+                            <i class="fas fa-star <%= i < Math.round(mechanic ? mechanic.rating : 0) ? 'text-warning' : 'text-muted' %> small"></i>
+                          <% } %>
+                          <span class="ms-1">(<%= mechanic ? mechanic.rating : '0.0' %>)</span>
+                        </div>
+                      </td>
+                      <td>
+                        <% if (mechanic) { %>
+                          <span class="badge bg-<%= mechanic.availability ? 'success' : 'danger' %>">
+                            <%= mechanic.availability ? 'Available' : 'Unavailable' %>
+                          </span>
+                        <% } else { %>
+                          <span class="badge bg-secondary">Unknown</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <span class="badge bg-info rounded-pill">
+                          <%= mechanic.jobCount || 0 %>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <a href="/admin/mechanic/<%= mechanic._id %>" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i> View
+                          </a>
+                          <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteMechanicModal<%= mechanic._id %>">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                        
+                        <!-- Delete Mechanic Modal -->
+                        <div class="modal fade" id="deleteMechanicModal<%= mechanic._id %>" tabindex="-1" aria-labelledby="deleteMechanicModalLabel<%= mechanic._id %>" aria-hidden="true">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="deleteMechanicModalLabel<%= mechanic._id %>">Delete Mechanic</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <p>Are you sure you want to delete the mechanic <strong><%= mechanic.name %></strong>?</p>
+                                <p class="text-danger">This action cannot be undone. All associated bookings and data will be deleted.</p>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form action="/admin/mechanic/<%= mechanic._id %>/delete" method="POST">
+                                  <button type="submit" class="btn btn-danger">Delete Mechanic</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-chart-pie text-primary me-2"></i>Mechanics by Specialization</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="specializationChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-chart-bar text-primary me-2"></i>Mechanics by Experience</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="experienceChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% const extraScripts = `
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchMechanic');
+    const searchButton = document.getElementById('searchButton');
+    const availabilityFilter = document.getElementById('availabilityFilter');
+    const specializationFilter = document.getElementById('specializationFilter');
+    const experienceFilter = document.getElementById('experienceFilter');
+    const ratingFilter = document.getElementById('ratingFilter');
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const mechanicsTable = document.getElementById('mechanicsTable');
+    const tableRows = mechanicsTable ? mechanicsTable.querySelectorAll('tbody tr') : [];
+    
+    // Apply filters function
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const availabilityValue = availabilityFilter.value;
+      const specializationValue = specializationFilter.value;
+      const experienceValue = experienceFilter.value;
+      const ratingValue = ratingFilter.value;
+      
+      tableRows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        const availability = row.getAttribute('data-availability');
+        const specializations = row.getAttribute('data-specialization').split(',');
+        const experience = parseInt(row.getAttribute('data-experience'));
+        const rating = parseFloat(row.getAttribute('data-rating'));
+        
+        const searchMatch = !searchTerm || rowText.includes(searchTerm);
+        const availabilityMatch = availabilityValue === 'all' || availability === availabilityValue;
+        const specializationMatch = specializationValue === 'all' || specializations.includes(specializationValue);
+        
+        let experienceMatch = true;
+        if (experienceValue === '0-2') {
+          experienceMatch = experience >= 0 && experience <= 2;
+        } else if (experienceValue === '3-5') {
+          experienceMatch = experience >= 3 && experience <= 5;
+        } else if (experienceValue === '6-10') {
+          experienceMatch = experience >= 6 && experience <= 10;
+        } else if (experienceValue === '10+') {
+          experienceMatch = experience > 10;
+        }
+        
+        let ratingMatch = true;
+        if (ratingValue === '4+') {
+          ratingMatch = rating >= 4;
+        } else if (ratingValue === '3+') {
+          ratingMatch = rating >= 3;
+        } else if (ratingValue === '2+') {
+          ratingMatch = rating >= 2;
+        } else if (ratingValue === '1+') {
+          ratingMatch = rating >= 1;
+        }
+        
+        if (searchMatch && availabilityMatch && specializationMatch && experienceMatch && ratingMatch) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+    
+    // Event listeners
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+    
+    if (searchButton) {
+      searchButton.addEventListener('click', applyFilters);
+    }
+    
+    if (searchInput) {
+      searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          applyFilters();
+        }
+      });
+    }
+    
+    // Initialize charts
+    if (document.getElementById('specializationChart')) {
+      // Prepare data for specialization chart
+      const specializations = {};
+      tableRows.forEach(row => {
+        const specializationList = row.getAttribute('data-specialization').split(',');
+        specializationList.forEach(spec => {
+          if (spec && !specializations[spec]) {
+            specializations[spec] = 0;
+          }
+          if (spec) {
+            specializations[spec]++;
+          }
+        });
+      });
+      
+      const specializationLabels = Object.keys(specializations);
+      const specializationData = Object.values(specializations);
+      
+      const specializationCtx = document.getElementById('specializationChart').getContext('2d');
+      new Chart(specializationCtx, {
+        type: 'doughnut',
+        data: {
+          labels: specializationLabels,
+          datasets: [{
+            data: specializationData,
+            backgroundColor: [
+              '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0',
+              '#4895ef', '#560bad', '#f3722c', '#f8961e', '#90be6d'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                padding: 15
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+    
+    if (document.getElementById('experienceChart')) {
+      // Prepare data for experience chart
+      const experienceRanges = {
+        '0-2 years': 0,
+        '3-5 years': 0,
+        '6-10 years': 0,
+        '10+ years': 0
+      };
+      
+      tableRows.forEach(row => {
+        const experience = parseInt(row.getAttribute('data-experience'));
+        
+        if (experience >= 0 && experience <= 2) {
+          experienceRanges['0-2 years']++;
+        } else if (experience >= 3 && experience <= 5) {
+          experienceRanges['3-5 years']++;
+        } else if (experience >= 6 && experience <= 10) {
+          experienceRanges['6-10 years']++;
+        } else if (experience > 10) {
+          experienceRanges['10+ years']++;
+        }
+      });
+      
+      const experienceLabels = Object.keys(experienceRanges);
+      const experienceData = Object.values(experienceRanges);
+      
+      const experienceCtx = document.getElementById('experienceChart').getContext('2d');
+      new Chart(experienceCtx, {
+        type: 'bar',
+        data: {
+          labels: experienceLabels,
+          datasets: [{
+            label: 'Mechanics',
+            data: experienceData,
+            backgroundColor: '#4361ee',
+            borderWidth: 0,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+` %>
+

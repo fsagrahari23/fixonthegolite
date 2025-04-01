@@ -1,0 +1,241 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <% if (user.role === 'user') { %>
+          <li class="breadcrumb-item">
+            <a href="/user/dashboard">Dashboard</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="/user/booking/<%= booking._id %>">Booking Details</a>
+          </li>
+          <% } else if (user.role === 'mechanic') { %>
+          <li class="breadcrumb-item">
+            <a href="/mechanic/dashboard">Dashboard</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="/mechanic/booking/<%= booking._id %>">Job Details</a>
+          </li>
+          <% } else { %>
+          <li class="breadcrumb-item">
+            <a href="/admin/dashboard">Dashboard</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="/admin/bookings">Bookings</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="/admin/booking/<%= booking._id %>">Booking Details</a>
+          </li>
+          <% } %>
+          <li class="breadcrumb-item active" aria-current="page">Chat</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card border-0 shadow-sm">
+        <div
+          class="card-header bg-white d-flex justify-content-between align-items-center py-3"
+        >
+          <div class="d-flex align-items-center">
+            <div class="avatar-circle bg-primary text-white me-2">
+              <% if (user.role === 'user') { %> <%=
+              booking.mechanic.name.charAt(0).toUpperCase() %> <% } else { %>
+              <%= booking.user.name.charAt(0).toUpperCase() %> <% } %>
+            </div>
+            <div>
+              <h5 class="mb-0">
+                <% if (user.role === 'user') { %> <%= booking.mechanic.name %>
+                <% } else { %> <%= booking.user.name %> <% } %>
+              </h5>
+              <small class="text-muted">
+                Booking #<%= booking._id.toString().substring(0, 8) %>
+              </small>
+            </div>
+          </div>
+          <span class="booking-status status-<%= booking.status %>">
+            <%= booking.status %>
+          </span>
+        </div>
+
+        <div
+          class="chat-container"
+          id="chat-messages"
+          data-chat-id="<%= chat._id %>"
+        >
+          <% if (chat.messages.length === 0) { %>
+          <div class="text-center text-muted my-5">
+            <i class="fas fa-comments fa-3x mb-3"></i>
+            <p>No messages yet. Start the conversation!</p>
+          </div>
+          <% } else { %> <% chat.messages.forEach(message => { %>
+          <div
+            class="chat-message <%= message.sender.toString() === user._id.toString() ? 'sent' : 'received' %>"
+          >
+            <div class="sender-name">
+              <%= message.sender.toString() === user._id.toString() ? 'You' :
+              (booking.user._id.toString() === message.sender.toString() ?
+              booking.user.name : booking.mechanic.name) %>
+            </div>
+            <div class="message-content"><%= message.content %></div>
+
+            <% if (message.attachments && message.attachments.length > 0) { %>
+            <div class="message-attachments">
+              <% message.attachments.forEach(attachment => { %> <% if
+              (attachment.contentType &&
+              attachment.contentType.startsWith('image/')) { %>
+              <a
+                href="<%= attachment.type %>"
+                target="_blank"
+                class="attachment-thumbnail"
+              >
+                <img
+                  src="<%= attachment.type %>"
+                  alt="Attachment"
+                  onerror="this.onerror=null; this.src='/images/placeholder.png';"
+                />
+              </a>
+              <% } else { %>
+              <a
+                href="<%= attachment.type %>"
+                target="_blank"
+                class="attachment-file"
+              >
+                <i class="fas fa-file-alt"></i> Attachment
+              </a>
+              <% } %> <% }) %>
+            </div>
+            <% } %>
+
+            <div class="message-time">
+              <%= new Date(message.timestamp).toLocaleTimeString() %> <% if
+              (message.sender.toString() === user._id.toString() &&
+              message.read) { %>
+              <span class="text-primary ms-1" title="Read"
+                ><i class="fas fa-check-double"></i
+              ></span>
+              <% } %>
+            </div>
+          </div>
+          <% }) %> <% } %>
+        </div>
+
+        <div class="card-footer bg-white p-0">
+          <form id="chat-form" class="chat-input">
+            <div class="input-group">
+              <input
+                type="text"
+                id="chat-input"
+                class="form-control border-0"
+                placeholder="Type your message..."
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                id="attachment-btn"
+                class="btn btn-light border-0"
+              >
+                <i class="fas fa-paperclip"></i>
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+            <input type="file" id="attachment-input" class="d-none" multiple />
+            <div id="attachment-preview" class="p-2 d-none">
+              <div class="d-flex align-items-center">
+                <small class="text-muted me-2"
+                  ><span id="attachment-count">0</span> file(s) selected</small
+                >
+                <button
+                  type="button"
+                  id="clear-attachments"
+                  class="btn btn-sm btn-link text-danger p-0"
+                >
+                  <i class="fas fa-times"></i> Clear
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between mt-4">
+        <% if (user.role === 'user') { %>
+        <a
+          href="/user/booking/<%= booking._id %>"
+          class="btn btn-outline-secondary"
+        >
+          <i class="fas fa-arrow-left"></i> Back to Booking
+        </a>
+        <% } else if (user.role === 'mechanic') { %>
+        <a
+          href="/mechanic/booking/<%= booking._id %>"
+          class="btn btn-outline-secondary"
+        >
+          <i class="fas fa-arrow-left"></i> Back to Job
+        </a>
+        <% } else { %>
+        <a
+          href="/admin/booking/<%= booking._id %>"
+          class="btn btn-outline-secondary"
+        >
+          <i class="fas fa-arrow-left"></i> Back to Booking
+        </a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<audio
+  id="notification-sound"
+  src="/sounds/notification.mp3"
+  preload="auto"
+></audio>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Add body data attribute for socket.io
+    document.body.dataset.userId = "<%= user._id %>";
+
+    // Initialize chat
+    initializeChat("<%= chat._id %>");
+
+    // Attachment handling
+    const attachmentBtn = document.getElementById("attachment-btn");
+    const attachmentInput = document.getElementById("attachment-input");
+    const attachmentPreview = document.getElementById("attachment-preview");
+    const attachmentCount = document.getElementById("attachment-count");
+    const clearAttachments = document.getElementById("clear-attachments");
+
+    if (attachmentBtn) {
+      attachmentBtn.addEventListener("click", function () {
+        attachmentInput.click();
+      });
+    }
+
+    if (attachmentInput) {
+      attachmentInput.addEventListener("change", function () {
+        if (this.files.length > 0) {
+          attachmentCount.textContent = this.files.length;
+          attachmentPreview.classList.remove("d-none");
+        } else {
+          attachmentPreview.classList.add("d-none");
+        }
+      });
+    }
+
+    if (clearAttachments) {
+      clearAttachments.addEventListener("click", function () {
+        attachmentInput.value = "";
+        attachmentPreview.classList.add("d-none");
+      });
+    }
+  });
+</script>
+

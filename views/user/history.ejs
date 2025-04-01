@@ -1,0 +1,244 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/user/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Booking History</li>
+        </ol>
+      </nav>
+      
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-0"><i class="fas fa-history text-primary me-2"></i>Booking History</h1>
+        <a href="/user/book" class="btn btn-primary">
+          <i class="fas fa-plus me-2"></i> New Booking
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h5 class="mb-0"><i class="fas fa-filter text-primary me-2"></i>Filter Bookings</h5>
+            </div>
+            <div class="col-md-4">
+              <div class="input-group">
+                <input type="text" class="form-control" id="searchBooking" placeholder="Search bookings...">
+                <button class="btn btn-outline-secondary" type="button">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label for="statusFilter" class="form-label">Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="categoryFilter" class="form-label">Category</label>
+              <select class="form-select" id="categoryFilter">
+                <option value="all">All Categories</option>
+                <option value="Engine Issues">Engine Issues</option>
+                <option value="Brake Problems">Brake Problems</option>
+                <option value="Electrical Issues">Electrical Issues</option>
+                <option value="Tire Puncture">Tire Puncture</option>
+                <option value="Battery Issues">Battery Issues</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="dateFrom" class="form-label">From Date</label>
+              <input type="date" class="form-control" id="dateFrom">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="dateTo" class="form-label">To Date</label>
+              <input type="date" class="form-control" id="dateTo">
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary" id="applyFilters">
+              <i class="fas fa-filter me-2"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>All Bookings</h5>
+        </div>
+        <div class="card-body p-0">
+          <% if (bookings.length === 0) { %>
+            <div class="text-center py-5">
+              <img src="/images/empty-bookings.png" alt="No Bookings" class="img-fluid mb-3" style="max-width: 200px;">
+              <h5>No bookings found</h5>
+              <p class="text-muted">You haven't made any bookings yet.</p>
+              <a href="/user/book" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> Create Your First Booking
+              </a>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle" id="bookingsTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Problem</th>
+                    <th>Mechanic</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% bookings.forEach(booking => { %>
+                    <tr data-status="<%= booking.status %>" data-category="<%= booking.problemCategory %>" data-date="<%= new Date(booking.createdAt).toISOString() %>">
+                      <td>
+                        <div class="d-flex flex-column">
+                          <span><%= new Date(booking.createdAt).toLocaleDateString() %></span>
+                          <small class="text-muted"><%= new Date(booking.createdAt).toLocaleTimeString() %></small>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="d-inline-block text-truncate" style="max-width: 150px;" title="<%= booking.problemCategory %>">
+                          <%= booking.problemCategory %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (booking.mechanic) { %>
+                          <div class="d-flex align-items-center">
+                            <div class="avatar-circle bg-primary text-white me-2">
+                              <%= booking.mechanic.name.charAt(0).toUpperCase() %>
+                            </div>
+                            <span><%= booking.mechanic.name %></span>
+                          </div>
+                        <% } else { %>
+                          <span class="text-muted">Not assigned</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <span class="booking-status status-<%= booking.status %>">
+                          <%= booking.status %>
+                        </span>
+                      </td>
+                      <td>
+                        <% if (booking.status === 'completed') { %>
+                          <% if (booking.payment && booking.payment.status === 'completed') { %>
+                            <span class="badge bg-success">Paid</span>
+                          <% } else { %>
+                            <span class="badge bg-warning text-dark">Pending</span>
+                          <% } %>
+                        <% } else { %>
+                          <span class="badge bg-secondary">N/A</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <a href="/user/booking/<%= booking._id %>" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i> View
+                          </a>
+                          <% if (booking.status === 'completed' && booking.payment && booking.payment.status === 'pending') { %>
+                            <a href="/payment/<%= booking._id %>" class="btn btn-sm btn-success">
+                              <i class="fas fa-credit-card"></i> Pay
+                            </a>
+                          <% } %>
+                          <% if (booking.mechanic && ['accepted', 'in-progress'].includes(booking.status)) { %>
+                            <a href="/chat/<%= booking._id %>" class="btn btn-sm btn-info">
+                              <i class="fas fa-comments"></i> Chat
+                            </a>
+                          <% } %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% const extraScripts = `
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchBooking');
+    const statusFilter = document.getElementById('statusFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const dateFromFilter = document.getElementById('dateFrom');
+    const dateToFilter = document.getElementById('dateTo');
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const bookingsTable = document.getElementById('bookingsTable');
+    const tableRows = bookingsTable ? bookingsTable.querySelectorAll('tbody tr') : [];
+    
+    // Apply filters function
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const statusValue = statusFilter.value;
+      const categoryValue = categoryFilter.value;
+      const dateFromValue = dateFromFilter.value ? new Date(dateFromFilter.value) : null;
+      const dateToValue = dateToFilter.value ? new Date(dateToFilter.value) : null;
+      
+      tableRows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        const category = row.getAttribute('data-category');
+        const date = new Date(row.getAttribute('data-date'));
+        const rowText = row.textContent.toLowerCase();
+        
+        const statusMatch = statusValue === 'all' || status === statusValue;
+        const categoryMatch = categoryValue === 'all' || category === categoryValue;
+        const searchMatch = !searchTerm || rowText.includes(searchTerm);
+        
+        let dateMatch = true;
+        if (dateFromValue && dateToValue) {
+          dateMatch = date >= dateFromValue && date <= dateToValue;
+        } else if (dateFromValue) {
+          dateMatch = date >= dateFromValue;
+        } else if (dateToValue) {
+          dateMatch = date <= dateToValue;
+        }
+        
+        if (statusMatch && categoryMatch && searchMatch && dateMatch) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+    
+    // Event listeners
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+    
+    if (searchInput) {
+      searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          applyFilters();
+        }
+      });
+    }
+  });
+</script>
+` %>
+

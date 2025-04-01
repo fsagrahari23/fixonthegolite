@@ -1,0 +1,644 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="/user/dashboard">Dashboard</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            Book a Mechanic
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="fas fa-tools text-primary me-2"></i>Book a Mechanic
+          </h5>
+        </div>
+        <div class="card-body">
+          <form
+            action="/user/book"
+            method="POST"
+            enctype="multipart/form-data"
+            id="booking-form"
+          >
+            <div class="mb-4">
+              <label for="problemCategory" class="form-label"
+                >Problem Category</label
+              >
+              <select
+                class="form-select"
+                id="problemCategory"
+                name="problemCategory"
+                required
+              >
+                <option value="" selected disabled>Select a category</option>
+                <option value="Flat Tire">Flat Tire</option>
+                <option value="Battery Issues">Battery Issues</option>
+                <option value="Engine Problems">Engine Problems</option>
+                <option value="Brake Issues">Brake Issues</option>
+                <option value="Chain/Gear Problems">Chain/Gear Problems</option>
+                <option value="Electrical Issues">Electrical Issues</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label for="description" class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                id="description"
+                name="description"
+                rows="4"
+                placeholder="Please describe the issue in detail..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label">Upload Images (Optional)</label>
+              <div class="input-group">
+                <input
+                  type="file"
+                  class="form-control"
+                  id="images"
+                  name="images"
+                  multiple
+                  accept="image/*"
+                />
+                <label class="input-group-text" for="images"
+                  ><i class="fas fa-upload"></i
+                ></label>
+              </div>
+              <div class="form-text">
+                You can upload multiple images to help the mechanic understand
+                the issue better.
+              </div>
+              <div id="image-preview" class="mt-2 row g-2"></div>
+            </div>
+
+            <div class="mb-4">
+              <label for="address" class="form-label">Your Location</label>
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="address"
+                  name="address"
+                  placeholder="Enter your address"
+                  value="<%= user.address %>"
+                  required
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="get-location-btn"
+                >
+                  <i class="fas fa-map-marker-alt"></i> Get Current Location
+                </button>
+              </div>
+              <div class="form-text">
+                This is where the mechanic will come to assist you.
+              </div>
+              <div id="location-error" class="text-danger mt-1 d-none">
+                Please provide a valid location. We couldn't determine your
+                coordinates.
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div
+                id="location-map"
+                style="height: 300px; border-radius: 10px"
+              ></div>
+              <input
+                type="hidden"
+                id="latitude"
+                name="latitude"
+                value="<%= user.location && user.location.coordinates ? user.location.coordinates[1] : '' %>"
+              />
+              <input
+                type="hidden"
+                id="longitude"
+                name="longitude"
+                value="<%= user.location && user.location.coordinates ? user.location.coordinates[0] : '' %>"
+              />
+            </div>
+
+            <div class="mb-4">
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="requiresTowing"
+                  name="requiresTowing"
+                />
+                <label class="form-check-label" for="requiresTowing"
+                  >I need towing service</label
+                >
+              </div>
+              <div class="form-text">
+                Check this if your bike needs to be towed to a repair shop.
+              </div>
+            </div>
+
+            <div id="towing-details" class="mb-4 d-none">
+              <div class="card border-0 bg-light">
+                <div class="card-body">
+                  <h6 class="mb-3">Towing Details</h6>
+
+                  <div class="mb-3">
+                    <label for="pickupAddress" class="form-label"
+                      >Pickup Location</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="pickupAddress"
+                      name="pickupAddress"
+                      placeholder="Enter pickup address"
+                    />
+                    <div class="form-text">
+                      Default is your current location.
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="dropoffAddress" class="form-label"
+                      >Dropoff Location</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="dropoffAddress"
+                      name="dropoffAddress"
+                      placeholder="Enter dropoff address"
+                    />
+                    <div class="form-text">
+                      Where should your bike be towed to?
+                    </div>
+                    <div id="dropoff-error" class="text-danger mt-1 d-none">
+                      Please provide a valid dropoff location.
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <div
+                      id="towing-map"
+                      style="height: 200px; border-radius: 10px"
+                    ></div>
+                    <input
+                      type="hidden"
+                      id="pickupLatitude"
+                      name="pickupLatitude"
+                      value=""
+                    />
+                    <input
+                      type="hidden"
+                      id="pickupLongitude"
+                      name="pickupLongitude"
+                      value=""
+                    />
+                    <input
+                      type="hidden"
+                      id="dropoffLatitude"
+                      name="dropoffLatitude"
+                      value=""
+                    />
+                    <input
+                      type="hidden"
+                      id="dropoffLongitude"
+                      name="dropoffLongitude"
+                      value=""
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary" id="submit-btn">
+                <i class="fas fa-paper-plane me-2"></i> Submit Booking
+              </button>
+              <a href="/user/dashboard" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% const extraScripts = `
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Default coordinates for India if location is not available
+    const DEFAULT_LAT = 20.5937;
+    const DEFAULT_LNG = 78.9629;
+
+    // Initialize map with default coordinates
+    const locationMap = L.map('location-map').setView([DEFAULT_LAT, DEFAULT_LNG], 5);
+    let towingMap;
+    let marker;
+    let pickupMarker;
+    let dropoffMarker;
+    let routeLine;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(locationMap);
+
+    // Form validation
+    document.getElementById('booking-form').addEventListener('submit', function(e) {
+      const lat = document.getElementById('latitude').value;
+      const lng = document.getElementById('longitude').value;
+      const requiresTowing = document.getElementById('requiresTowing').checked;
+
+      // Validate main location
+      if (!lat || !lng || lat === '0' || lng === '0') {
+        e.preventDefault();
+        document.getElementById('location-error').classList.remove('d-none');
+        window.scrollTo({
+          top: document.getElementById('location-error').offsetTop - 100,
+          behavior: 'smooth'
+        });
+        return false;
+      }
+
+      // Validate towing details if towing is required
+      if (requiresTowing) {
+        const dropoffLat = document.getElementById('dropoffLatitude').value;
+        const dropoffLng = document.getElementById('dropoffLongitude').value;
+
+        if (!dropoffLat || !dropoffLng || dropoffLat === '0' || dropoffLng === '0') {
+          e.preventDefault();
+          document.getElementById('dropoff-error').classList.remove('d-none');
+          window.scrollTo({
+            top: document.getElementById('dropoff-error').offsetTop - 100,
+            behavior: 'smooth'
+          });
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // Get current location button
+    document.getElementById('get-location-btn').addEventListener('click', function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          if (isValidCoordinates(lat, lng)) {
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            document.getElementById('location-error').classList.add('d-none');
+
+            // Update map
+            locationMap.setView([lat, lng], 15);
+
+            if (marker) {
+              marker.setLatLng([lat, lng]);
+            } else {
+              marker = L.marker([lat, lng], {draggable: true}).addTo(locationMap);
+              marker.on('dragend', function(e) {
+                const position = marker.getLatLng();
+                if (isValidCoordinates(position.lat, position.lng)) {
+                  document.getElementById('latitude').value = position.lat;
+                  document.getElementById('longitude').value = position.lng;
+                  document.getElementById('location-error').classList.add('d-none');
+                  // Get address from coordinates
+                  reverseGeocode(position.lat, position.lng, function(address) {
+                    if (address) {
+                      document.getElementById('address').value = address;
+                    }
+                  });
+                }
+              });
+            }
+
+            // Get address from coordinates
+            reverseGeocode(lat, lng, function(address) {
+              if (address) {
+                document.getElementById('address').value = address;
+                // Also update pickup address for towing
+                document.getElementById('pickupAddress').value = address;
+                document.getElementById('pickupLatitude').value = lat;
+                document.getElementById('pickupLongitude').value = lng;
+                if (pickupMarker && towingMap) {
+                  pickupMarker.setLatLng([lat, lng]);
+                  updateTowingRoute();
+                }
+              }
+            });
+          } else {
+            showNotification('Invalid coordinates received. Please try again or enter location manually.', 'warning');
+          }
+        }, function(error) {
+          console.error('Geolocation error:', error);
+          showNotification('Could not get your location. Please enter it manually.', 'warning');
+        });
+      } else {
+        showNotification('Geolocation is not supported by your browser.', 'warning');
+      }
+    });
+
+    // Initialize map with user's saved location if available
+    const userLat = parseFloat(document.getElementById('latitude').value);
+    const userLng = parseFloat(document.getElementById('longitude').value);
+
+    if (isValidCoordinates(userLat, userLng)) {
+      locationMap.setView([userLat, userLng], 15);
+      marker = L.marker([userLat, userLng], {draggable: true}).addTo(locationMap);
+      marker.on('dragend', function(e) {
+        const position = marker.getLatLng();
+        if (isValidCoordinates(position.lat, position.lng)) {
+          document.getElementById('latitude').value = position.lat;
+          document.getElementById('longitude').value = position.lng;
+          document.getElementById('location-error').classList.add('d-none');
+          // Get address from coordinates
+          reverseGeocode(position.lat, position.lng, function(address) {
+            if (address) {
+              document.getElementById('address').value = address;
+            }
+          });
+        }
+      });
+    } else {
+      // Try to get user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          if (isValidCoordinates(lat, lng)) {
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            locationMap.setView([lat, lng], 15);
+            marker = L.marker([lat, lng], {draggable: true}).addTo(locationMap);
+            marker.on('dragend', function(e) {
+              const position = marker.getLatLng();
+              if (isValidCoordinates(position.lat, position.lng)) {
+                document.getElementById('latitude').value = position.lat;
+                document.getElementById('longitude').value = position.lng;
+                document.getElementById('location-error').classList.add('d-none');
+              }
+            });
+            if (!document.getElementById('address').value) {
+              reverseGeocode(lat, lng, function(address) {
+                if (address) {
+                  document.getElementById('address').value = address;
+                }
+              });
+            }
+          }
+        }, function(error) {
+          console.error('Geolocation error:', error);
+          locationMap.setView([DEFAULT_LAT, DEFAULT_LNG], 5);
+        });
+      } else {
+        locationMap.setView([DEFAULT_LAT, DEFAULT_LNG], 5);
+      }
+    }
+
+    // Handle address input change
+    document.getElementById('address').addEventListener('change', function() {
+      const address = this.value;
+      if (address) {
+        geocodeAddress(address, function(lat, lng) {
+          if (isValidCoordinates(lat, lng)) {
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            document.getElementById('location-error').classList.add('d-none');
+            locationMap.setView([lat, lng], 15);
+            if (marker) {
+              marker.setLatLng([lat, lng]);
+            } else {
+              marker = L.marker([lat, lng], {draggable: true}).addTo(locationMap);
+              marker.on('dragend', function(e) {
+                const position = marker.getLatLng();
+                if (isValidCoordinates(position.lat, position.lng)) {
+                  document.getElementById('latitude').value = position.lat;
+                  document.getElementById('longitude').value = position.lng;
+                  document.getElementById('location-error').classList.add('d-none');
+                }
+              });
+            }
+          } else {
+            document.getElementById('location-error').classList.remove('d-none');
+          }
+        });
+      }
+    });
+
+    // Handle towing checkbox
+    document.getElementById('requiresTowing').addEventListener('change', function() {
+      const towingDetails = document.getElementById('towing-details');
+      if (this.checked) {
+        towingDetails.classList.remove('d-none');
+        if (!towingMap) {
+          towingMap = L.map('towing-map').setView([DEFAULT_LAT, DEFAULT_LNG], 5);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(towingMap);
+          const lat = document.getElementById('latitude').value;
+          const lng = document.getElementById('longitude').value;
+          if (isValidCoordinates(lat, lng)) {
+            towingMap.setView([lat, lng], 13);
+            pickupMarker = L.marker([lat, lng], {
+              icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+              })
+            }).addTo(towingMap).bindPopup('Pickup Location');
+            document.getElementById('pickupLatitude').value = lat;
+            document.getElementById('pickupLongitude').value = lng;
+            document.getElementById('pickupAddress').value = document.getElementById('address').value;
+          }
+        }
+      } else {
+        towingDetails.classList.add('d-none');
+      }
+    });
+
+    // Handle pickup address input
+    document.getElementById('pickupAddress').addEventListener('change', function() {
+      const address = this.value;
+      if (address && towingMap) {
+        geocodeAddress(address, function(lat, lng) {
+          if (isValidCoordinates(lat, lng)) {
+            document.getElementById('pickupLatitude').value = lat;
+            document.getElementById('pickupLongitude').value = lng;
+            if (pickupMarker) {
+              pickupMarker.setLatLng([lat, lng]);
+            } else {
+              pickupMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34]
+                })
+              }).addTo(towingMap).bindPopup('Pickup Location');
+            }
+            updateTowingRoute();
+          }
+        });
+      }
+    });
+
+    // Handle dropoff address input
+    document.getElementById('dropoffAddress').addEventListener('change', function() {
+      const address = this.value;
+      if (address && towingMap) {
+        geocodeAddress(address, function(lat, lng) {
+          if (isValidCoordinates(lat, lng)) {
+            document.getElementById('dropoffLatitude').value = lat;
+            document.getElementById('dropoffLongitude').value = lng;
+            document.getElementById('dropoff-error').classList.add('d-none');
+            if (dropoffMarker) {
+              dropoffMarker.setLatLng([lat, lng]);
+            } else {
+              dropoffMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34]
+                })
+              }).addTo(towingMap).bindPopup('Dropoff Location');
+            }
+            updateTowingRoute();
+          } else {
+            document.getElementById('dropoff-error').classList.remove('d-none');
+          }
+        });
+      }
+    });
+
+    // Handle image preview
+    document.getElementById('images').addEventListener('change', function() {
+      const previewContainer = document.getElementById('image-preview');
+      previewContainer.innerHTML = '';
+      if (this.files) {
+        for (let i = 0; i < this.files.length; i++) {
+          const file = this.files[i];
+          if (file.type.match('image.*')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const col = document.createElement('div');
+              col.className = 'col-4 col-md-3';
+              const img = document.createElement('img');
+              img.src = e.target.result;
+              img.className = 'img-thumbnail';
+              img.style.height = '100px';
+              img.style.objectFit = 'cover';
+              col.appendChild(img);
+              previewContainer.appendChild(col);
+            }
+            reader.readAsDataURL(file);
+          }
+        }
+      }
+    });
+
+    // Helper functions
+    function isValidCoordinates(lat, lng) {
+      return lat && lng && !isNaN(lat) && !isNaN(lng) &&
+             lat !== 0 && lng !== 0 &&
+             lat >= -90 && lat <= 90 &&
+             lng >= -180 && lng <= 180;
+    }
+
+    function geocodeAddress(address, callback) {
+      fetch(\`https://nominatim.openstreetmap.org/search?format=json&q=\${encodeURIComponent(address)}\`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+            callback(lat, lng);
+          } else {
+            callback(null, null);
+          }
+        })
+        .catch(error => {
+          console.error('Error geocoding address:', error);
+          callback(null, null);
+        });
+    }
+
+    function reverseGeocode(lat, lng, callback) {
+      fetch(\`https://nominatim.openstreetmap.org/reverse?format=json&lat=\${lat}&lon=\${lng}\`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.display_name) {
+            callback(data.display_name);
+          } else {
+            callback(null);
+          }
+        })
+        .catch(error => {
+          console.error('Error getting address:', error);
+          callback(null);
+        });
+    }
+
+    function updateTowingRoute() {
+      if (pickupMarker && dropoffMarker) {
+        const pickupLatLng = pickupMarker.getLatLng();
+        const dropoffLatLng = dropoffMarker.getLatLng();
+        if (routeLine) {
+          towingMap.removeLayer(routeLine);
+        }
+        routeLine = L.polyline([
+          [pickupLatLng.lat, pickupLatLng.lng],
+          [dropoffLatLng.lat, dropoffLatLng.lng]
+        ], {color: 'blue', dashArray: '5, 10'}).addTo(towingMap);
+        towingMap.fitBounds([
+          [pickupLatLng.lat, pickupLatLng.lng],
+          [dropoffLatLng.lat, dropoffLatLng.lng]
+        ]);
+      }
+    }
+
+    function showNotification(message, type) {
+      const notification = document.createElement('div');
+      notification.className = \`alert alert-\${type} alert-dismissible fade show position-fixed\`;
+      notification.style.top = '20px';
+      notification.style.right = '20px';
+      notification.style.zIndex = '9999';
+      notification.innerHTML = \`
+        \${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      \`;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 150);
+      }, 5000);
+    }
+  });
+</script>
+` %> <%- extraScripts %>

@@ -1,0 +1,342 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Manage Users</li>
+        </ol>
+      </nav>
+      
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-0"><i class="fas fa-users text-primary me-2"></i>Manage Users</h1>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h5 class="mb-0"><i class="fas fa-filter text-primary me-2"></i>Filter Users</h5>
+            </div>
+            <div class="col-md-4">
+              <div class="input-group">
+                <input type="text" class="form-control" id="searchUser" placeholder="Search users...">
+                <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="statusFilter" class="form-label">Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="all">All Users</option>
+                <option value="active">Active Users</option>
+                <option value="inactive">Inactive Users</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="dateFrom" class="form-label">From Date</label>
+              <input type="date" class="form-control" id="dateFrom">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="dateTo" class="form-label">To Date</label>
+              <input type="date" class="form-control" id="dateTo">
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary" id="applyFilters">
+              <i class="fas fa-filter me-2"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>All Users</h5>
+          <span class="badge bg-primary rounded-pill"><%= users.length %> Users</span>
+        </div>
+        <div class="card-body p-0">
+          <% if (users.length === 0) { %>
+            <div class="text-center py-5">
+              <img src="/images/empty-users.png" alt="No Users" class="img-fluid mb-3" style="max-width: 200px;">
+              <h5>No users found</h5>
+              <p class="text-muted">There are no users in the system yet.</p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle" id="usersTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Joined Date</th>
+                    <th>Bookings</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% users.forEach(user => { %>
+                    <tr data-date="<%= new Date(user.createdAt).toISOString() %>">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-primary text-white me-2">
+                            <%= user.name.charAt(0).toUpperCase() %>
+                          </div>
+                          <span><%= user.name %></span>
+                        </div>
+                      </td>
+                      <td><%= user.email %></td>
+                      <td><%= user.phone %></td>
+                      <td><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                      <td>
+                        <span class="badge bg-info rounded-pill">
+                          <%= user.bookingCount || 0 %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge bg-success">Active</span>
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <a href="/admin/user/<%= user._id %>" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i> View
+                          </a>
+                          <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal<%= user._id %>">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                        
+                        <!-- Delete User Modal -->
+                        <div class="modal fade" id="deleteUserModal<%= user._id %>" tabindex="-1" aria-labelledby="deleteUserModalLabel<%= user._id %>" aria-hidden="true">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="deleteUserModalLabel<%= user._id %>">Delete User</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <p>Are you sure you want to delete the user <strong><%= user.name %></strong>?</p>
+                                <p class="text-danger">This action cannot be undone. All associated bookings and data will be deleted.</p>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form action="/admin/user/<%= user._id %>/delete" method="POST">
+                                  <button type="submit" class="btn btn-danger">Delete User</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-chart-pie text-primary me-2"></i>User Registration</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="registrationChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-chart-bar text-primary me-2"></i>User Activity</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="activityChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% const extraScripts = `
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchUser');
+    const searchButton = document.getElementById('searchButton');
+    const statusFilter = document.getElementById('statusFilter');
+    const dateFromFilter = document.getElementById('dateFrom');
+    const dateToFilter = document.getElementById('dateTo');
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const usersTable = document.getElementById('usersTable');
+    const tableRows = usersTable ? usersTable.querySelectorAll('tbody tr') : [];
+    
+    // Apply filters function
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const statusValue = statusFilter.value;
+      const dateFromValue = dateFromFilter.value ? new Date(dateFromFilter.value) : null;
+      const dateToValue = dateToFilter.value ? new Date(dateToFilter.value) : null;
+      
+      tableRows.forEach(row => {
+        const date = new Date(row.getAttribute('data-date'));
+        const rowText = row.textContent.toLowerCase();
+        const statusCell = row.querySelector('td:nth-child(6)');
+        const statusText = statusCell ? statusCell.textContent.toLowerCase() : '';
+        
+        const statusMatch = statusValue === 'all' || 
+                          (statusValue === 'active' && statusText.includes('active')) ||
+                          (statusValue === 'inactive' && statusText.includes('inactive'));
+        const searchMatch = !searchTerm || rowText.includes(searchTerm);
+        
+        let dateMatch = true;
+        if (dateFromValue && dateToValue) {
+          dateMatch = date >= dateFromValue && date <= dateToValue;
+        } else if (dateFromValue) {
+          dateMatch = date >= dateFromValue;
+        } else if (dateToValue) {
+          dateMatch = date <= dateToValue;
+        }
+        
+        if (statusMatch && searchMatch && dateMatch) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+    
+    // Event listeners
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+    
+    if (searchButton) {
+      searchButton.addEventListener('click', applyFilters);
+    }
+    
+    if (searchInput) {
+      searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          applyFilters();
+        }
+      });
+    }
+    
+    // Initialize charts
+    if (document.getElementById('registrationChart')) {
+      // Prepare data for registration chart (last 6 months)
+      const months = [];
+      const registrations = [];
+      
+      // Get last 6 months
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        months.push(date.toLocaleString('default', { month: 'short' }));
+        registrations.push(0); // Initialize with 0
+      }
+      
+      // Calculate registrations for each month
+      tableRows.forEach(row => {
+        const date = new Date(row.getAttribute('data-date'));
+        
+        // Check if date is within last 6 months
+        const currentDate = new Date();
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
+        
+        if (date >= sixMonthsAgo) {
+          const monthIndex = currentDate.getMonth() - date.getMonth();
+          const normalizedIndex = monthIndex < 0 ? monthIndex + 12 : monthIndex;
+          if (normalizedIndex < 6) {
+            registrations[5 - normalizedIndex]++;
+          }
+        }
+      });
+      
+      const registrationCtx = document.getElementById('registrationChart').getContext('2d');
+      new Chart(registrationCtx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [{
+            label: 'New Users',
+            data: registrations,
+            backgroundColor: '#4361ee',
+            borderWidth: 0,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    if (document.getElementById('activityChart')) {
+      // Sample data for activity chart
+      const activityCtx = document.getElementById('activityChart').getContext('2d');
+      new Chart(activityCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Active Users', 'Inactive Users'],
+          datasets: [{
+            data: [${users.length}, 0],
+            backgroundColor: ['#38b000', '#ef476f'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                padding: 15
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+  });
+</script>
+` %>
+

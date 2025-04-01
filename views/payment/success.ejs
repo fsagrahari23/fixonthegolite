@@ -1,0 +1,51 @@
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card">
+      <div class="card-body text-center py-5">
+        <div class="mb-4">
+          <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+        </div>
+        <h2 class="mb-3">Payment Successful!</h2>
+        <p class="mb-4">Your payment of $<%= booking.payment.amount.toFixed(2) %> has been processed successfully.</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-8 mx-auto">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h5 class="card-title">Payment Details</h5>
+                <ul class="list-group list-group-flush">
+                  <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                    <span>Booking ID:</span>
+                    <span><%= booking._id %></span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                    <span>Transaction ID:</span>
+                    <span><%= booking.payment.transactionId %></span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                    <span>Amount:</span>
+                    <span class="fw-bold">$<%= booking.payment.amount.toFixed(2) %></span>
+                  </li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                    <span>Date:</span>
+                    <span><%= new Date().toLocaleString() %></span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="d-grid gap-2 col-md-6 mx-auto">
+          <a href="/user/booking/<%= booking._id %>" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Booking
+          </a>
+          <a href="/user/dashboard" class="btn btn-outline-secondary">
+            <i class="fas fa-home me-2"></i> Go to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

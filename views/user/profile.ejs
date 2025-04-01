@@ -1,0 +1,335 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="/user/dashboard">Dashboard</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">My Profile</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4 mb-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center p-4">
+          <div class="avatar-circle-large bg-primary text-white mx-auto mb-3">
+            <%= user.name.charAt(0).toUpperCase() %>
+          </div>
+          <h4 class="mb-1"><%= user.name %></h4>
+          <p class="text-muted mb-3"><%= user.email %></p>
+
+          <div class="d-flex justify-content-center mb-3">
+            <span class="badge bg-primary rounded-pill px-3 py-2">
+              <i class="fas fa-user me-1"></i> User
+            </span>
+          </div>
+
+          <div class="border-top pt-3 mt-3">
+            <div class="row text-start">
+              <div class="col-6 mb-2">
+                <p class="text-muted mb-1 small">Member Since</p>
+                <p class="mb-0 fw-bold">
+                  <%= new Date(user.createdAt).toLocaleDateString() %>
+                </p>
+              </div>
+              <div class="col-6 mb-2">
+                <p class="text-muted mb-1 small">Total Bookings</p>
+                <p class="mb-0 fw-bold" id="totalBookings">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="fas fa-map-marker-alt text-primary me-2"></i>Your Location
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div id="user-map" style="height: 250px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div
+          class="card-header bg-white d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <i class="fas fa-user-edit text-primary me-2"></i>Edit Profile
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <form action="/user/profile" method="POST">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label">Full Name</label>
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-user"></i
+                  ></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="name"
+                    name="name"
+                    value="<%= user.name %>"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="email" class="form-label">Email Address</label>
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-envelope"></i
+                  ></span>
+                  <input
+                    type="email"
+                    class="form-control"
+                    id="email"
+                    value="<%= user.email %>"
+                    disabled
+                  />
+                </div>
+                <div class="form-text">Email cannot be changed</div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="phone" class="form-label">Phone Number</label>
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-phone"></i
+                  ></span>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    id="phone"
+                    name="phone"
+                    value="<%= user.phone %>"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="address" class="form-label">Address</label>
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-map-marker-alt"></i
+                  ></span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="address"
+                    name="address"
+                    value="<%= user.address %>"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label">Update Location</label>
+              <div
+                id="update-map"
+                style="height: 300px; border-radius: 10px"
+              ></div>
+              <input
+                type="hidden"
+                id="latitude"
+                name="latitude"
+                value="<%= user.location.coordinates[1] %>"
+              />
+              <input
+                type="hidden"
+                id="longitude"
+                name="longitude"
+                value="<%= user.location.coordinates[0] %>"
+              />
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i> Save Changes
+              </button>
+              <a href="/user/dashboard" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="fas fa-lock text-primary me-2"></i>Change Password
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <form action="/user/change-password" method="POST">
+            <div class="mb-3">
+              <label for="currentPassword" class="form-label"
+                >Current Password</label
+              >
+              <div class="input-group">
+                <span class="input-group-text"
+                  ><i class="fas fa-lock"></i
+                ></span>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="currentPassword"
+                  name="currentPassword"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="newPassword" class="form-label">New Password</label>
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-key"></i
+                  ></span>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="newPassword"
+                    name="newPassword"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="confirmPassword" class="form-label"
+                  >Confirm New Password</label
+                >
+                <div class="input-group">
+                  <span class="input-group-text"
+                    ><i class="fas fa-key"></i
+                  ></span>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-key me-2"></i> Update Password
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Fetch total bookings
+    fetch('/user/api/bookings/count')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('totalBookings').textContent = data.count || 0;
+      })
+      .catch(error => {
+        console.error('Error fetching booking count:', error);
+        document.getElementById('totalBookings').textContent = '0';
+      });
+
+    // Initialize current location map
+    const userMap = L.map('user-map').setView([
+      <%= user.location.coordinates[1] || 0 %>,
+      <%= user.location.coordinates[0] || 0 %>
+    ], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(userMap);
+
+    // Add marker for current location
+    L.marker([
+      <%= user.location.coordinates[1] || 0 %>,
+      <%= user.location.coordinates[0] || 0 %>
+    ]).addTo(userMap)
+      .bindPopup('Your current location')
+      .openPopup();
+
+    // Initialize update location map
+    const updateMap = L.map('update-map').setView([
+      <%= user.location.coordinates[1] || 0 %>,
+      <%= user.location.coordinates[0] || 0 %>
+    ], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(updateMap);
+
+    // Add draggable marker for updating location
+    const marker = L.marker([
+      <%= user.location.coordinates[1] || 0 %>,
+      <%= user.location.coordinates[0] || 0 %>
+    ], { draggable: true }).addTo(updateMap);
+
+    marker.on('dragend', function(e) {
+      const position = marker.getLatLng();
+      document.getElementById('latitude').value = position.lat;
+      document.getElementById('longitude').value = position.lng;
+
+      // Try to get address from coordinates
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.display_name) {
+            document.getElementById('address').value = data.display_name;
+          }
+        })
+        .catch(error => console.error('Error getting address:', error));
+    });
+
+    // Update marker when address changes
+    document.getElementById('address').addEventListener('change', function() {
+      const address = this.value;
+
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
+
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+
+            updateMap.setView([lat, lng], 15);
+            marker.setLatLng([lat, lng]);
+          }
+        })
+        .catch(error => console.error('Error geocoding address:', error));
+    });
+  });
+</script>

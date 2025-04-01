@@ -1,0 +1,302 @@
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <h5 class="mb-0">Booking Details</h5>
+        <span class="booking-status status-<%= booking.status %>">
+          <%= booking.status %>
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <p><strong>Booking ID:</strong> <%= booking._id %></p>
+            <p>
+              <strong>Date:</strong> <%= new
+              Date(booking.createdAt).toLocaleString() %>
+            </p>
+            <p>
+              <strong>Problem Category:</strong> <%= booking.problemCategory %>
+            </p>
+            <p><strong>Status:</strong> <%= booking.status %></p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Location:</strong> <%= booking.location.address %></p>
+            <% if (booking.mechanic) { %>
+            <p><strong>Mechanic:</strong> <%= booking.mechanic.name %></p>
+            <p>
+              <strong>Mechanic Phone:</strong> <%= booking.mechanic.phone %>
+            </p>
+            <% } else { %>
+            <p><strong>Mechanic:</strong> Not assigned yet</p>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h6>Description</h6>
+          <p><%= booking.description %></p>
+        </div>
+
+        <% if (booking.images && booking.images.length > 0) { %>
+        <div class="mb-4">
+          <h6>Images</h6>
+          <div class="row">
+            <% booking.images.forEach(image => { %>
+            <div class="col-md-4 mb-3">
+              <a href="<%= image %>" target="_blank">
+                <img
+                  src="<%= image %>"
+                  alt="Booking Image"
+                  class="img-fluid rounded"
+                />
+              </a>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+        <% } %> <% if (booking.status === 'completed' && booking.payment) { %>
+        <div class="mb-4">
+          <h6>Payment Details</h6>
+          <div class="card">
+            <div class="card-body">
+              <p>
+                <strong>Amount:</strong> $<%= booking.payment.amount.toFixed(2)
+                %>
+              </p>
+              <p><strong>Status:</strong> <%= booking.payment.status %></p>
+              <% if (booking.payment.status === 'pending') { %>
+              <a href="/payment/<%= booking._id %>" class="btn btn-success">
+                <i class="fas fa-credit-card"></i> Make Payment
+              </a>
+              <% } else if (booking.payment.status === 'completed') { %>
+              <p>
+                <strong>Transaction ID:</strong> <%=
+                booking.payment.transactionId %>
+              </p>
+              <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> Payment completed
+                successfully
+              </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+        <% } %> <% if (booking.status === 'pending' && !booking.mechanic &&
+        nearbyMechanics.length > 0) { %>
+        <div class="mb-4">
+          <h6>Available Mechanics Nearby</h6>
+          <div class="list-group">
+            <% nearbyMechanics.forEach(mechanic => { %>
+            <div class="list-group-item list-group-item-action">
+              <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1"><%= mechanic.name %></h5>
+                <small>
+                  <% for(let i = 0; i < 5; i++) { %>
+                  <i
+                    class="fas fa-star <%= i < Math.round(mechanic.rating || 0) ? 'text-warning' : 'text-muted' %>"
+                  ></i>
+                  <% } %>
+                </small>
+              </div>
+              <p class="mb-1">Phone: <%= mechanic.phone %></p>
+              <form
+                action="/user/booking/<%= booking._id %>/select-mechanic"
+                method="POST"
+                class="mt-2"
+              >
+                <input
+                  type="hidden"
+                  name="mechanicId"
+                  value="<%= mechanic._id %>"
+                />
+                <button type="submit" class="btn btn-sm btn-primary">
+                  <i class="fas fa-user-check"></i> Select This Mechanic
+                </button>
+              </form>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+        <% } %> <% if (booking.status === 'completed' && booking.payment &&
+        booking.payment.status === 'completed' && !booking.rating) { %>
+        <div class="mt-4">
+          <h6 class="fw-bold">Rate Your Mechanic</h6>
+          <div class="card bg-light border-0">
+            <div class="card-body">
+              <form
+                id="rating-form"
+                action="/user/booking/<%= booking._id %>/rate"
+                method="POST"
+              >
+                <div class="mb-3">
+                  <label class="form-label"
+                    >How would you rate the service?</label
+                  >
+                  <div class="rating">
+                    <% for(let i = 1; i <= 5; i++) { %> <input type="radio"
+                    name="rating" value="<%= i %>" id="rating-<%= i %>"
+                    class="d-none" <%= i === 5 ? 'checked' : '' %>>
+                    <label for="rating-<%= i %>" class="rating-star">
+                      <i class="fas fa-star"></i>
+                    </label>
+                    <% } %>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="comment" class="form-label"
+                    >Comments (Optional)</label
+                  >
+                  <textarea
+                    class="form-control"
+                    id="comment"
+                    name="comment"
+                    rows="3"
+                    placeholder="Share your experience..."
+                  ></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-star me-2"></i> Submit Rating
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <% } else if (booking.rating) { %>
+        <div class="mt-4">
+          <h6 class="fw-bold">Your Rating</h6>
+          <div class="card bg-light border-0">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-2">
+                <div class="me-2">
+                  <% for(let i = 1; i <= 5; i++) { %>
+                  <i
+                    class="fas fa-star <%= i <= booking.rating.value ? 'text-warning' : 'text-muted' %>"
+                  ></i>
+                  <% } %>
+                </div>
+                <div class="text-muted">
+                  <%= new Date(booking.rating.createdAt).toLocaleDateString() %>
+                </div>
+              </div>
+              <% if (booking.rating.comment) { %>
+              <p class="mb-0"><%= booking.rating.comment %></p>
+              <% } else { %>
+              <p class="text-muted mb-0">No comment provided</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <div class="d-flex justify-content-between mt-4">
+          <a href="/user/dashboard" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+
+          <div>
+            <% if (booking.status === 'pending' || booking.status ===
+            'accepted') { %>
+            <form
+              action="/user/booking/<%= booking._id %>/cancel"
+              method="POST"
+              class="d-inline"
+            >
+              <button
+                type="submit"
+                class="btn btn-danger"
+                onclick="return confirm('Are you sure you want to cancel this booking?')"
+              >
+                <i class="fas fa-times-circle"></i> Cancel Booking
+              </button>
+            </form>
+            <% } %> <% if (chat) { %>
+            <a href="/chat/<%= booking._id %>" class="btn btn-primary ms-2">
+              <i class="fas fa-comments"></i> Chat with Mechanic
+            </a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if (booking.status === 'in-progress' && booking.mechanic) { %>
+<div class="row mt-4">
+  <div class="col-md-8 mx-auto">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Track Mechanic</h5>
+      </div>
+      <div class="card-body">
+        <div id="tracking-map" style="height: 300px; border-radius: 10px"></div>
+        <div class="mt-3 text-center">
+          <p id="mechanic-eta">Calculating ETA...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% const extraScripts = `
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+/>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tracking map
+    const map = L.map('tracking-map').setView([${booking.location.coordinates[1]}, ${booking.location.coordinates[0]}], 13);
+    window.bookingMap = map;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Add user marker
+    const userMarker = L.marker([${booking.location.coordinates[1]}, ${booking.location.coordinates[0]}])
+      .addTo(map)
+      .bindPopup('Your Location')
+      .openPopup();
+
+    window.userLocation = [${booking.location.coordinates[1]}, ${booking.location.coordinates[0]}];
+
+    // Add mechanic marker (will be updated via socket.io)
+    const mechanicMarker = L.marker([${booking.location.coordinates[1]}, ${booking.location.coordinates[0]}], {
+      icon: L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34]
+      })
+    })
+    .addTo(map)
+    .bindPopup('Mechanic Location');
+
+    window.mechanicMarker = mechanicMarker;
+
+    // Calculate distance between two points
+    window.calculateDistance = function(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Radius of the earth in km
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const distance = R * c; // Distance in km
+      return distance;
+    }
+
+    function deg2rad(deg) {
+      return deg * (Math.PI/180);
+    }
+      document.body.dataset.userId = '${user._id}';
+  });
+</script>
+` %> <% } %>

@@ -1,0 +1,245 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-5">
+          <div class="text-center mb-4">
+            <img
+              src="/images/pending-approval.png"
+              alt="Pending Approval"
+              class="img-fluid mb-3"
+              style="max-width: 200px"
+            />
+            <h2 class="card-title text-primary">Application Under Review</h2>
+            <div class="progress mb-3" style="height: 10px">
+              <div
+                class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                role="progressbar"
+                style="width: 50%"
+                aria-valuenow="50"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <p class="mb-0">
+              Your mechanic application has been submitted successfully and is
+              currently under review by our admin team.
+            </p>
+          </div>
+
+          <div class="card mb-4 border-0 bg-light">
+            <div class="card-body">
+              <h5 class="card-title text-secondary">What happens next?</h5>
+              <ol class="timeline">
+                <li class="timeline-item">
+                  <div class="timeline-marker bg-success"></div>
+                  <div class="timeline-content">
+                    <h6 class="mb-0">Application Submitted</h6>
+                    <small class="text-muted">Completed</small>
+                  </div>
+                </li>
+                <li class="timeline-item">
+                  <div class="timeline-marker bg-warning"></div>
+                  <div class="timeline-content">
+                    <h6 class="mb-0">Admin Review</h6>
+                    <small class="text-muted">In Progress</small>
+                    <p class="mt-2">
+                      Our team is reviewing your credentials and documentation.
+                    </p>
+                  </div>
+                </li>
+                <li class="timeline-item">
+                  <div class="timeline-marker bg-secondary"></div>
+                  <div class="timeline-content">
+                    <h6 class="mb-0">Approval Decision</h6>
+                    <small class="text-muted">Pending</small>
+                  </div>
+                </li>
+                <li class="timeline-item">
+                  <div class="timeline-marker bg-secondary"></div>
+                  <div class="timeline-content">
+                    <h6 class="mb-0">Start Working</h6>
+                    <small class="text-muted">Pending</small>
+                  </div>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="card mb-4 border-0 bg-light">
+            <div class="card-body">
+              <h5 class="card-title text-secondary">Approval Process</h5>
+              <p>
+                The approval process typically takes 1-2 business days. We'll
+                notify you via email once your application has been reviewed.
+              </p>
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span>We verify your identity and credentials</span>
+              </div>
+              <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span>We review your specializations and experience</span>
+              </div>
+              <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span>We check your uploaded documentation</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center mt-4">
+            <p>Have questions about your application?</p>
+            <div class="d-flex justify-content-center gap-3">
+              <a
+                href="mailto:support@fixonthego.com"
+                class="btn btn-outline-primary"
+              >
+                <i class="fas fa-envelope me-2"></i>Contact Support
+              </a>
+              <a href="/" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Return to Homepage
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-4 shadow-sm border-0">
+        <div class="card-body p-4">
+          <h5 class="card-title text-primary">Frequently Asked Questions</h5>
+          <div class="accordion mt-3" id="faqAccordion">
+            <div class="accordion-item border-0 mb-2">
+              <h2 class="accordion-header" id="headingOne">
+                <button
+                  class="accordion-button collapsed bg-light"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseOne"
+                  aria-expanded="false"
+                  aria-controls="collapseOne"
+                >
+                  How long does the approval process take?
+                </button>
+              </h2>
+              <div
+                id="collapseOne"
+                class="accordion-collapse collapse"
+                aria-labelledby="headingOne"
+                data-bs-parent="#faqAccordion"
+              >
+                <div class="accordion-body">
+                  The approval process typically takes 1-2 business days. During
+                  peak periods, it may take up to 3 business days.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item border-0 mb-2">
+              <h2 class="accordion-header" id="headingTwo">
+                <button
+                  class="accordion-button collapsed bg-light"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseTwo"
+                  aria-expanded="false"
+                  aria-controls="collapseTwo"
+                >
+                  Can I edit my application while it's pending?
+                </button>
+              </h2>
+              <div
+                id="collapseTwo"
+                class="accordion-collapse collapse"
+                aria-labelledby="headingTwo"
+                data-bs-parent="#faqAccordion"
+              >
+                <div class="accordion-body">
+                  No, you cannot edit your application once it's submitted. If
+                  you need to make changes, please contact our support team.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item border-0">
+              <h2 class="accordion-header" id="headingThree">
+                <button
+                  class="accordion-button collapsed bg-light"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseThree"
+                  aria-expanded="false"
+                  aria-controls="collapseThree"
+                >
+                  What if my application is rejected?
+                </button>
+              </h2>
+              <div
+                id="collapseThree"
+                class="accordion-collapse collapse"
+                aria-labelledby="headingThree"
+                data-bs-parent="#faqAccordion"
+              >
+                <div class="accordion-body">
+                  If your application is rejected, you'll receive an email
+                  explaining the reasons. You can address the issues and reapply
+                  after 30 days.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add custom CSS for timeline -->
+<style>
+  .timeline {
+    list-style: none;
+    padding: 0;
+    position: relative;
+  }
+
+  .timeline:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #ddd;
+    left: 9px;
+    margin-left: 0;
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 20px;
+  }
+
+  .timeline-marker {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    left: 0;
+    top: 0;
+  }
+
+  .timeline-content {
+    padding-top: 0;
+  }
+
+  .accordion-button:not(.collapsed) {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+  }
+
+  .accordion-button:focus {
+    box-shadow: none;
+    border-color: rgba(var(--bs-primary-rgb), 0.25);
+  }
+</style>

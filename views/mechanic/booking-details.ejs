@@ -1,0 +1,519 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/mechanic/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="/mechanic/history">Job History</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Job Details</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Job Information</h5>
+          <span class="booking-status status-<%= booking.status %>">
+            <%= booking.status %>
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <p class="text-muted mb-1">Booking ID</p>
+              <p class="fw-bold mb-3"><%= booking._id %></p>
+              
+              <p class="text-muted mb-1">Date & Time</p>
+              <p class="fw-bold mb-3"><%= new Date(booking.createdAt).toLocaleString() %></p>
+              
+              <p class="text-muted mb-1">Problem Category</p>
+              <p class="fw-bold mb-3"><%= booking.problemCategory %></p>
+              
+              <p class="text-muted mb-1">Status</p>
+              <p class="fw-bold mb-0"><%= booking.status %></p>
+            </div>
+            <div class="col-md-6">
+              <p class="text-muted mb-1">Location</p>
+              <p class="fw-bold mb-3"><%= booking.location.address %></p>
+              
+              <p class="text-muted mb-1">Customer</p>
+              <div class="d-flex align-items-center mb-3">
+                <div class="avatar-circle bg-primary text-white me-2">
+                  <%= booking.user.name.charAt(0).toUpperCase() %>
+                </div>
+                <div>
+                  <p class="fw-bold mb-0"><%= booking.user.name %></p>
+                  <p class="small text-muted mb-0"><%= booking.user.phone %></p>
+                </div>
+              </div>
+              
+              <% if (booking.status === 'completed' && booking.payment) { %>
+                <p class="text-muted mb-1">Payment Status</p>
+                <p class="fw-bold mb-0">
+                  <% if (booking.payment.status === 'completed') { %>
+                    <span class="text-success">Paid</span>
+                  <% } else { %>
+                    <span class="text-warning">Pending Payment</span>
+                  <% } %>
+                </p>
+              <% } %>
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <h6 class="fw-bold">Description</h6>
+            <p class="mb-0"><%= booking.description %></p>
+          </div>
+          
+          <% if (booking.images && booking.images.length > 0) { %>
+            <div class="mb-4">
+              <h6 class="fw-bold">Images</h6>
+              <div class="row g-3">
+                <% booking.images.forEach(image => { %>
+                  <div class="col-md-4 col-6">
+                    <a href="<%= image %>" target="_blank" class="image-popup">
+                      <img src="<%= image %>" alt="Booking Image" class="img-fluid rounded shadow-sm" style="object-fit: cover; height: 150px; width: 100%;">
+                    </a>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+          
+          <% if (booking.status === 'completed') { %>
+            <div class="mb-4">
+              <h6 class="fw-bold">Service Notes</h6>
+              <div class="alert alert-light">
+                <%= booking.notes || 'No notes provided' %>
+              </div>
+            </div>
+            
+            <% if (booking.payment) { %>
+              <div class="mb-4">
+                <h6 class="fw-bold">Payment Details</h6>
+                <div class="card bg-light border-0">
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <p class="text-muted mb-1">Amount</p>
+                        <p class="fw-bold text-success mb-3">$<%= booking.payment.amount.toFixed(2) %></p>
+                      </div>
+                      <div class="col-md-6">
+                        <p class="text-muted mb-1">Status</p>
+                        <p class="fw-bold mb-0">
+                          <% if (booking.payment.status === 'completed') { %>
+                            <span class="text-success">Completed</span>
+                          <% } else { %>
+                            <span class="text-warning">Pending</span>
+                          <% } %>
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <% if (booking.payment.status === 'completed') { %>
+                      <p class="text-muted mb-1">Transaction ID</p>
+                      <p class="fw-bold mb-0"><%= booking.payment.transactionId %></p>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+          <% } %>
+          
+          <% if (booking.status === 'pending' || booking.status === 'accepted') { %>
+            <div class="alert alert-info">
+              <div class="d-flex">
+                <i class="fas fa-info-circle fs-4 me-3"></i>
+                <div>
+                  <strong>Job Information</strong>
+                  <p class="mb-0">
+                    <% if (booking.status === 'pending') { %>
+                      This job is pending. Accept it to start working.
+                    <% } else { %>
+                      You've accepted this job. Start the service when you arrive at the customer's location.
+                    <% } %>
+                  </p>
+                </div>
+              </div>
+            </div>
+          <% } else if (booking.status === 'in-progress') { %>
+            <div class="alert alert-primary">
+              <div class="d-flex">
+                <i class="fas fa-tools fs-4 me-3"></i>
+                <div>
+                  <strong>Job In Progress</strong>
+                  <p class="mb-0">You're currently working on this job. Complete the service when finished.</p>
+                </div>
+              </div>
+            </div>
+          <% } %>
+          
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <a href="/mechanic/history" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-2"></i> Back to History
+            </a>
+            
+            <% if (booking.status === 'pending') { %>
+              <form action="/mechanic/booking/<%= booking._id %>/accept" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-check-circle me-2"></i> Accept Job
+                </button>
+              </form>
+            <% } else if (booking.status === 'accepted') { %>
+              <form action="/mechanic/booking/<%= booking._id %>/start" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-play-circle me-2"></i> Start Service
+                </button>
+              </form>
+            <% } else if (booking.status === 'in-progress') { %>
+              <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeServiceModal">
+                <i class="fas fa-check-circle me-2"></i> Complete Service
+              </button>
+            <% } %>
+            
+            <% if (['accepted', 'in-progress'].includes(booking.status)) { %>
+              <a href="/chat/<%= booking._id %>" class="btn btn-info">
+                <i class="fas fa-comments me-2"></i> Chat with Customer
+              </a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      
+      <% if (booking.status === 'in-progress') { %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-map-marker-alt text-primary me-2"></i>Your Location</h5>
+          </div>
+          <div class="card-body p-0">
+            <div id="location-map" style="height: 300px;"></div>
+            <div class="p-3">
+              <p class="mb-0 text-muted">Your real-time location is being shared with the customer.</p>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-user text-primary me-2"></i>Customer Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center mb-4">
+            <div class="avatar-circle-large bg-primary text-white mx-auto mb-3">
+              <%= booking.user.name.charAt(0).toUpperCase() %>
+            </div>
+            <h5 class="mb-1"><%= booking.user.name %></h5>
+            <p class="text-muted mb-0"><%= booking.user.phone %></p>
+          </div>
+          
+          <div class="mb-3">
+            <p class="text-muted mb-1">Address</p>
+            <p class="fw-bold mb-0"><%= booking.user.address %></p>
+          </div>
+          
+          <div class="d-grid gap-2">
+            <a href="tel:<%= booking.user.phone %>" class="btn btn-outline-primary">
+              <i class="fas fa-phone me-2"></i> Call Customer
+            </a>
+            <% if (['accepted', 'in-progress'].includes(booking.status)) { %>
+              <a href="/chat/<%= booking._id %>" class="btn btn-outline-info">
+                <i class="fas fa-comments me-2"></i> Chat with Customer
+              </a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Job Timeline</h5>
+        </div>
+        <div class="card-body p-0">
+          <ul class="timeline">
+            <li class="timeline-item">
+              <div class="timeline-marker bg-success"></div>
+              <div class="timeline-content p-3">
+                <h6 class="mb-1">Job Created</h6>
+                <p class="small text-muted mb-0"><%= new Date(booking.createdAt).toLocaleString() %></p>
+              </div>
+            </li>
+            
+            <% if (booking.status !== 'pending') { %>
+              <li class="timeline-item">
+                <div class="timeline-marker bg-success"></div>
+                <div class="timeline-content p-3">
+                  <h6 class="mb-1">Job Accepted</h6>
+                  <p class="small text-muted mb-0">You accepted this job</p>
+                </div>
+              </li>
+            <% } %>
+            
+            <% if (booking.status === 'in-progress' || booking.status === 'completed') { %>
+              <li class="timeline-item">
+                <div class="timeline-marker bg-success"></div>
+                <div class="timeline-content p-3">
+                  <h6 class="mb-1">Service Started</h6>
+                  <p class="small text-muted mb-0">You started working on this job</p>
+                </div>
+              </li>
+            <% } %>
+            
+            <% if (booking.status === 'completed') { %>
+              <li class="timeline-item">
+                <div class="timeline-marker bg-success"></div>
+                <div class="timeline-content p-3">
+                  <h6 class="mb-1">Service Completed</h6>
+                  <p class="small text-muted mb-0">You completed this job</p>
+                </div>
+              </li>
+              
+              <li class="timeline-item">
+                <div class="timeline-marker <%= booking.payment && booking.payment.status === 'completed' ? 'bg-success' : 'bg-warning' %>"></div>
+                <div class="timeline-content p-3">
+                  <h6 class="mb-1">Payment</h6>
+                  <% if (booking.payment && booking.payment.status === 'completed') { %>
+                    <p class="small text-success mb-0">Payment received</p>
+                  <% } else { %>
+                    <p class="small text-warning mb-0">Payment pending</p>
+                  <% } %>
+                </div>
+              </li>
+            <% } %>
+            
+            <% if (booking.status === 'cancelled') { %>
+              <li class="timeline-item">
+                <div class="timeline-marker bg-danger"></div>
+                <div class="timeline-content p-3">
+                  <h6 class="mb-1">Booking Cancelled</h6>
+                  <p class="small text-muted mb-0">This job was cancelled</p>
+                </div>
+              </li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-map-marker-alt text-primary me-2"></i>Job Location</h5>
+        </div>
+        <div class="card-body p-0">
+          <div id="booking-map" style="height: 250px;"></div>
+          <div class="p-3">
+            <p class="mb-0"><i class="fas fa-map-marker-alt text-danger me-2"></i><%= booking.location.address %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Complete Service Modal -->
+<div class="modal fade" id="completeServiceModal" tabindex="-1" aria-labelledby="completeServiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="completeServiceModalLabel">Complete Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="/mechanic/booking/<%= booking._id %>/complete" method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="amount" class="form-label">Service Amount ($)</label>
+            <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" value="<%= profile.hourlyRate %>" required>
+            <div class="form-text">Enter the total amount for the service</div>
+          </div>
+          <div class="mb-3">
+            <label for="notes" class="form-label">Service Notes</label>
+            <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Describe the service performed..."></textarea>
+          </div>
+          <div class="alert alert-info">
+            <div class="d-flex">
+              <i class="fas fa-info-circle me-2"></i>
+              <div>
+                <p class="mb-0">After completing the service, the customer will be prompted to make the payment.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Complete Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .timeline {
+    position: relative;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .timeline-item {
+    position: relative;
+    padding-left: 40px;
+    border-left: 2px solid #e9ecef;
+  }
+  
+  .timeline-item:last-child {
+    border-left-color: transparent;
+  }
+  
+  .timeline-marker {
+    position: absolute;
+    top: 15px;
+    left: -8px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e9ecef;
+  }
+  
+  .timeline-content {
+    position: relative;
+  }
+  
+  .image-popup:hover img {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+</style>
+
+<% 
+  // Start building the extraScripts string
+  let extraScripts = `
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize booking location map
+    const bookingMap = L.map('booking-map').setView([
+      ${booking.location.coordinates[1]}, 
+      ${booking.location.coordinates[0]}
+    ], 15);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(bookingMap);
+    
+    // Add marker for booking location
+    L.marker([
+      ${booking.location.coordinates[1]}, 
+      ${booking.location.coordinates[0]}
+    ]).addTo(bookingMap)
+      .bindPopup('Job Location')
+      .openPopup();
+`;
+
+  // If the booking is in-progress, add extra code
+  if (booking.status === 'in-progress') {
+    extraScripts += `
+    // Initialize location map if in progress
+    const locationMap = L.map('location-map').setView([
+      ${booking.location.coordinates[1]}, 
+      ${booking.location.coordinates[0]}
+    ], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(locationMap);
+    
+    // Add customer marker
+    const customerMarker = L.marker([
+      ${booking.location.coordinates[1]}, 
+      ${booking.location.coordinates[0]}
+    ]).addTo(locationMap)
+      .bindPopup('Customer Location')
+      .openPopup();
+    
+    // Add mechanic marker (will be updated with real-time location)
+    let mechanicMarker;
+    
+    // Try to get mechanic's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        if (mechanicMarker) {
+          mechanicMarker.setLatLng([lat, lng]);
+        } else {
+          mechanicMarker = L.marker([lat, lng], {
+            icon: L.icon({
+              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34]
+            })
+          }).addTo(locationMap)
+            .bindPopup('Your Location')
+            .openPopup();
+        }
+        
+        // Update location via socket
+        if (window.socket) {
+          window.socket.emit('update-location', {
+            coordinates: [lng, lat]
+          });
+        }
+        
+        // Draw line between mechanic and customer
+        const latlngs = [
+          [lat, lng],
+          [${booking.location.coordinates[1]}, ${booking.location.coordinates[0]}]
+        ];
+        L.polyline(latlngs, {color: 'blue', dashArray: '5, 10'}).addTo(locationMap);
+        
+        // Fit bounds to show both markers
+        locationMap.fitBounds(latlngs);
+      }, function(error) {
+        console.error('Geolocation error:', error);
+      });
+      
+      // Watch position for real-time updates
+      navigator.geolocation.watchPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        if (mechanicMarker) {
+          mechanicMarker.setLatLng([lat, lng]);
+        }
+        
+        // Update location via socket
+        if (window.socket) {
+          window.socket.emit('update-location', {
+            coordinates: [lng, lat]
+          });
+        }
+      }, function(error) {
+        console.error('Geolocation error:', error);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 30000,
+        timeout: 27000
+      });
+    }
+    
+    // Add body data attribute for socket.io
+    document.body.dataset.userId = '${user._id}';
+`;
+  }
+  
+  // Append the closing tags for the script
+  extraScripts += `
+  });
+</script>
+`;
+%>
+<%- extraScripts %>

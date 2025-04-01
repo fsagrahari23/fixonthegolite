@@ -1,0 +1,499 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="/admin/dashboard">Dashboard</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            Manage Payments
+          </li>
+        </ol>
+      </nav>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-0">
+          <i class="fas fa-money-bill-wave text-primary me-2"></i>Manage
+          Payments
+        </h1>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h5 class="mb-0">
+                <i class="fas fa-filter text-primary me-2"></i>Filter Payments
+              </h5>
+            </div>
+            <div class="col-md-4">
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="searchPayment"
+                  placeholder="Search payments..."
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="searchButton"
+                >
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label for="statusFilter" class="form-label">Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="all">All Statuses</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="amountFilter" class="form-label">Amount Range</label>
+              <select class="form-select" id="amountFilter">
+                <option value="all">All Amounts</option>
+                <option value="0-50">$0 - $50</option>
+                <option value="50-100">$50 - $100</option>
+                <option value="100-200">$100 - $200</option>
+                <option value="200+">$200+</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="dateFrom" class="form-label">From Date</label>
+              <input type="date" class="form-control" id="dateFrom" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label for="dateTo" class="form-label">To Date</label>
+              <input type="date" class="form-control" id="dateTo" />
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary" id="applyFilters">
+              <i class="fas fa-filter me-2"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div
+        class="card border-0 shadow-sm stats-card bg-success-gradient text-white"
+      >
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h3 class="mb-0">$<%= totalRevenue %></h3>
+              <p class="mb-0">Total Revenue</p>
+            </div>
+            <div class="stats-icon">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div
+        class="card border-0 shadow-sm stats-card bg-primary-gradient text-white"
+      >
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h3 class="mb-0"><%= completedPayments %></h3>
+              <p class="mb-0">Completed Payments</p>
+            </div>
+            <div class="stats-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div
+        class="card border-0 shadow-sm stats-card bg-warning-gradient text-white"
+      >
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h3 class="mb-0"><%= pendingPayments %></h3>
+              <p class="mb-0">Pending Payments</p>
+            </div>
+            <div class="stats-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div
+          class="card-header bg-white d-flex justify-content-between align-items-center"
+        >
+          <h5 class="mb-0">
+            <i class="fas fa-list text-primary me-2"></i>All Payments
+          </h5>
+          <span class="badge bg-primary rounded-pill"
+            ><%= payments.length %> Payments</span
+          >
+        </div>
+        <div class="card-body p-0">
+          <% if (payments.length === 0) { %>
+          <div class="text-center py-5">
+            <img
+              src="/images/empty-payments.png"
+              alt="No Payments"
+              class="img-fluid mb-3"
+              style="max-width: 200px"
+            />
+            <h5>No payments found</h5>
+            <p class="text-muted">There are no payments in the system yet.</p>
+          </div>
+          <% } else { %>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle" id="paymentsTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Mechanic</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Transaction ID</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% payments.forEach(payment => { %>
+                <tr
+                  data-status="<%= payment.payment.status %>"
+                  data-amount="<%= payment.payment.amount %>"
+                  data-date="<%= new Date(payment.updatedAt).toISOString() %>"
+                >
+                  <td>
+                    <small class="text-muted"
+                      ><%= payment._id.toString().substring(0, 8) %>...</small
+                    >
+                  </td>
+                  <td>
+                    <div class="d-flex flex-column">
+                      <span
+                        ><%= new Date(payment.updatedAt).toLocaleDateString()
+                        %></span
+                      >
+                      <small class="text-muted"
+                        ><%= new Date(payment.updatedAt).toLocaleTimeString()
+                        %></small
+                      >
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-circle bg-primary text-white me-2">
+                        <%= payment.user.name.charAt(0).toUpperCase() %>
+                      </div>
+                      <span><%= payment.user.name %></span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-circle bg-success text-white me-2">
+                        <%= payment.mechanic.name.charAt(0).toUpperCase() %>
+                      </div>
+                      <span><%= payment.mechanic.name %></span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="fw-bold text-success"
+                      >$<%= payment.payment.amount.toFixed(2) %></span
+                    >
+                  </td>
+                  <td>
+                    <% if (payment.payment.status === 'completed') { %>
+                    <span class="badge bg-success">Completed</span>
+                    <% } else { %>
+                    <span class="badge bg-warning text-dark">Pending</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (payment.payment.transactionId) { %>
+                    <small class="text-muted"
+                      ><%= payment.payment.transactionId %></small
+                    >
+                    <% } else { %>
+                    <span class="text-muted">N/A</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <a
+                      href="/admin/booking/<%= payment._id %>"
+                      class="btn btn-sm btn-primary"
+                    >
+                      <i class="fas fa-eye"></i> View
+                    </a>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-line text-primary me-2"></i>Revenue Trend
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="revenueChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="fas fa-chart-pie text-primary me-2"></i>Payment Status
+          </h5>
+        </div>
+        <div class="card-body">
+          <canvas id="statusChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% const extraScripts = `
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchPayment");
+    const searchButton = document.getElementById("searchButton");
+    const statusFilter = document.getElementById("statusFilter");
+    const amountFilter = document.getElementById("amountFilter");
+    const dateFromFilter = document.getElementById("dateFrom");
+    const dateToFilter = document.getElementById("dateTo");
+    const applyFiltersBtn = document.getElementById("applyFilters");
+    const paymentsTable = document.getElementById("paymentsTable");
+    const tableRows = paymentsTable
+      ? paymentsTable.querySelectorAll("tbody tr")
+      : [];
+
+    // Apply filters function
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const statusValue = statusFilter.value;
+      const amountValue = amountFilter.value;
+      const dateFromValue = dateFromFilter.value
+        ? new Date(dateFromFilter.value)
+        : null;
+      const dateToValue = dateToFilter.value
+        ? new Date(dateToFilter.value)
+        : null;
+
+      tableRows.forEach((row) => {
+        const status = row.getAttribute("data-status");
+        const amount = parseFloat(row.getAttribute("data-amount"));
+        const date = new Date(row.getAttribute("data-date"));
+        const rowText = row.textContent.toLowerCase();
+
+        const statusMatch = statusValue === "all" || status === statusValue;
+        const searchMatch = !searchTerm || rowText.includes(searchTerm);
+
+        let amountMatch = true;
+        if (amountValue === "0-50") {
+          amountMatch = amount >= 0 && amount <= 50;
+        } else if (amountValue === "50-100") {
+          amountMatch = amount > 50 && amount <= 100;
+        } else if (amountValue === "100-200") {
+          amountMatch = amount > 100 && amount <= 200;
+        } else if (amountValue === "200+") {
+          amountMatch = amount > 200;
+        }
+
+        let dateMatch = true;
+        if (dateFromValue && dateToValue) {
+          dateMatch = date >= dateFromValue && date <= dateToValue;
+        } else if (dateFromValue) {
+          dateMatch = date >= dateFromValue;
+        } else if (dateToValue) {
+          dateMatch = date <= dateToValue;
+        }
+
+        if (statusMatch && searchMatch && amountMatch && dateMatch) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    }
+
+    // Event listeners
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener("click", applyFilters);
+    }
+
+    if (searchButton) {
+      searchButton.addEventListener("click", applyFilters);
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener("keyup", function (e) {
+        if (e.key === "Enter") {
+          applyFilters();
+        }
+      });
+    }
+
+    // Initialize charts
+    if (document.getElementById("revenueChart")) {
+      // Prepare data for revenue chart (last 6 months)
+      const months = [];
+      const revenues = [];
+
+      // Get last 6 months
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        months.push(date.toLocaleString("default", { month: "short" }));
+        revenues.push(0); // Initialize with 0
+      }
+
+      // Calculate revenue for each month
+      tableRows.forEach((row) => {
+        const date = new Date(row.getAttribute("data-date"));
+        const status = row.getAttribute("data-status");
+
+        if (status === "completed") {
+          const amount = parseFloat(row.getAttribute("data-amount"));
+
+          // Check if date is within last 6 months
+          const currentDate = new Date();
+          const sixMonthsAgo = new Date();
+          sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
+
+          if (date >= sixMonthsAgo) {
+            const monthIndex = currentDate.getMonth() - date.getMonth();
+            const normalizedIndex =
+              monthIndex < 0 ? monthIndex + 12 : monthIndex;
+            if (normalizedIndex < 6) {
+              revenues[5 - normalizedIndex] += amount;
+            }
+          }
+        }
+      });
+
+      const revenueCtx = document
+        .getElementById("revenueChart")
+        .getContext("2d");
+      new Chart(revenueCtx, {
+        type: "line",
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: "Revenue",
+              data: revenues,
+              borderColor: "#38b000",
+              backgroundColor: "rgba(56, 176, 0, 0.1)",
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false,
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function (value) {
+                  return "$" + value;
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    if (document.getElementById("statusChart")) {
+      // Prepare data for status chart
+      let completed = 0;
+      let pending = 0;
+
+      tableRows.forEach((row) => {
+        const status = row.getAttribute("data-status");
+        if (status === "completed") {
+          completed++;
+        } else if (status === "pending") {
+          pending++;
+        }
+      });
+
+      const statusCtx = document.getElementById("statusChart").getContext("2d");
+      new Chart(statusCtx, {
+        type: "doughnut",
+        data: {
+          labels: ["Completed", "Pending"],
+          datasets: [
+            {
+              data: [completed, pending],
+              backgroundColor: ["#38b000", "#f8961e"],
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                boxWidth: 12,
+                padding: 15,
+              },
+            },
+          },
+          cutout: "70%",
+        },
+      });
+    }
+  });
+</script>
+` %>
