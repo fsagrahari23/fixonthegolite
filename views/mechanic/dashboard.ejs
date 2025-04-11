@@ -365,19 +365,17 @@
       <div class="card">
         <div class="card-header bg-white">
           <h5 class="mb-0">
-            <i class="fas fa-map-marker-alt text-primary me-2"></i>
-            Your Location
+            <i class="fas fa-map-marker-alt text-primary me-2"></i>Your Location
           </h5>
         </div>
         <div class="card-body p-0">
-          <div id="mechanic-map" style="height: 200px"></div>
+          <div id="user-map" style="height: 300px"></div>
         </div>
       </div>
-    </div>
   </div>
 </div>
 
-<% const extraStyles = `
+
 <style>
   .bg-primary-gradient {
     background: linear-gradient(135deg, #4361ee 0%, #3a56d4 100%);
@@ -435,4 +433,59 @@
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   }
 </style>
-` %>
+
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Initialize map
+    const map = L.map("user-map").setView([0, 0], 13);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    // Check if user object exists
+    const user = window.user || {};
+    const lat = user?.location?.coordinates?.[1] || 0;
+    const lng = user?.location?.coordinates?.[0] || 0;
+
+    // Try to get user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          map.setView([lat, lng], 15);
+
+          // Add marker
+          const marker = L.marker([lat, lng]).addTo(map);
+          marker.bindPopup("Your current location").openPopup();
+        },
+        function (error) {
+          console.error("Geolocation error:", error);
+          if (lat !== 0 && lng !== 0) {
+            map.setView([lat, lng], 15);
+            const marker = L.marker([lat, lng]).addTo(map);
+            marker.bindPopup("Your location").openPopup();
+          }
+        }
+      );
+    } else {
+      if (lat !== 0 && lng !== 0) {
+        map.setView([lat, lng], 15);
+        const marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup("Your location").openPopup();
+      }
+    }
+  });
+</script>
+

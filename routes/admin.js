@@ -135,7 +135,7 @@ router.get("/mechanics", async (req, res) => {
   try {
     const mechnicWithProfile = await MechanicProfile.find({}).populate(
       "user",
-      "name email phone address role isApproved"
+      "_id name email phone address role isApproved"
     );
     const approvedMechanics = mechnicWithProfile.filter(
       (mechanic) => mechanic.user.isApproved === true
