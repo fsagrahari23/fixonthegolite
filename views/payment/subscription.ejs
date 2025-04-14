@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | Bike Assistance System</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-white py-3">
+          <h4 class="mb-0"><i class="fas fa-crown text-warning me-2"></i>Premium Subscription Payment</h4>
+        </div>
+        <div class="card-body p-4">
+          <div class="subscription-summary mb-4 p-4 bg-light rounded">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">
+                <%= plan.charAt(0).toUpperCase() + plan.slice(1) %> Premium Plan
+              </h5>
+              <span class="badge bg-<%= plan === 'monthly' ? 'primary' : 'dark' %> py-2 px-3">
+                <%= plan === 'monthly' ? 'Monthly' : 'Yearly' %>
+              </span>
+            </div>
+            
+            <hr class="my-3">
+            
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="text-muted">Plan Price</span>
+              <span class="fw-bold">$<%= amount.toFixed(2) %></span>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Billing Cycle</span>
+              <span><%= plan === 'monthly' ? 'Every month' : 'Every year' %></span>
+            </div>
+            
+            <hr class="my-3">
+            
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold">Total Due Today</span>
+              <span class="fw-bold text-primary fs-5">$<%= amount.toFixed(2) %></span>
+            </div>
+          </div>
+          
+          <form id="payment-form" data-plan="<%= plan %>">
+            <h5 class="mb-3">Payment Details</h5>
+            
+            <div class="mb-4">
+              <div id="card-element" class="form-control p-3" style="min-height: 20px;">
+                <!-- Stripe Card Element will be inserted here -->
+              </div>
+              <div id="card-errors" class="text-danger mt-2" role="alert"></div>
+            </div>
+            
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="terms-check" required>
+              <label class="form-check-label" for="terms-check">
+                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a> and <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+              </label>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" id="submit-button" class="btn btn-primary btn-lg">
+                <i class="fas fa-lock me-2"></i> Pay $<%= amount.toFixed(2) %>
+              </button>
+              <a href="/user/premium" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5 class="mb-3"><i class="fas fa-shield-alt text-primary me-2"></i>Secure Payment</h5>
+          <p class="text-muted mb-0">Your payment information is processed securely. We do not store credit card details nor have access to your credit card information.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h6>1. Subscription Terms</h6>
+        <p>By subscribing to our premium service, you agree to the following terms:</p>
+        <ul>
+          <li>Your subscription will automatically renew unless cancelled before the renewal date</li>
+          <li>You may cancel your subscription at any time from your profile page</li>
+          <li>No refunds will be provided for partial subscription periods</li>
+          <li>We reserve the right to modify the premium features or pricing with notice</li>
+        </ul>
+        
+        <h6>2. Payment Terms</h6>
+        <p>The subscription fee will be charged to your payment method on file. By subscribing, you authorize us to charge the applicable subscription fee at the then-current rate.</p>
+        
+        <h6>3. Premium Features</h6>
+        <p>Premium features are subject to availability and may change over time. We will make reasonable efforts to provide all advertised features, but specific features may be modified or removed.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>We take your privacy seriously. This policy describes how we collect, use, and protect your personal information.</p>
+        
+        <h6>1. Information Collection</h6>
+        <p>We collect payment information to process your subscription. Your payment details are securely handled by our payment processor and are not stored on our servers.</p>
+        
+        <h6>2. Information Use</h6>
+        <p>We use your information to:</p>
+        <ul>
+          <li>Process subscription payments</li>
+          <li>Provide premium services</li>
+          <li>Communicate with you about your subscription</li>
+          <li>Improve our services</li>
+        </ul>
+        
+        <h6>3. Data Protection</h6>
+        <p>We implement appropriate security measures to protect your personal information against unauthorized access or disclosure.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const stripe = Stripe('<%= stripePublishableKey %>');
+    console.log(stripe);
+    const elements = stripe.elements();
+    
+    // Create card element
+    const cardElement = elements.create('card', {
+      style: {
+        base: {
+          fontSize: '16px',
+          color: '#32325d',
+          fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+          fontSmoothing: 'antialiased',
+          '::placeholder': {
+            color: '#aab7c4'
+          }
+        },
+        invalid: {
+          color: '#fa755a',
+          iconColor: '#fa755a'
+        }
+      }
+    });
+    
+    // Mount the card element
+    cardElement.mount('#card-element');
+    
+    // Handle validation errors
+    cardElement.on('change', function(event) {
+      const displayError = document.getElementById('card-errors');
+      if (event.error) {
+        displayError.textContent = event.error.message;
+      } else {
+        displayError.textContent = '';
+      }
+    });
+    
+    // Handle form submission
+    const form = document.getElementById('payment-form');
+    const submitButton = document.getElementById('submit-button');
+    
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      
+      // Disable the submit button to prevent multiple clicks
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+      
+      try {
+        const { paymentMethod, error } = await stripe.createPaymentMethod({
+          type: 'card',
+          card: cardElement,
+        });
+        
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        // Send payment method ID to server
+        const response = await fetch('/payment/premium/process', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            paymentMethodId: paymentMethod.id,
+            plan: form.dataset.plan
+          }),
+        });
+        console.log(response)
+        const result = await response.json();
+        
+        if (result.success) {
+          window.location.href = result.redirectUrl;
+        } else {
+          throw new Error(result.message);
+        }
+      } catch (error) {
+        const errorElement = document.getElementById('card-errors');
+        errorElement.textContent = error.message;
+        
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Pay $<%= amount.toFixed(2) %>';
+      }
+    });
+  });
+</script>
+</body>
+</html>

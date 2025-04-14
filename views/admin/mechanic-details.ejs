@@ -268,7 +268,7 @@
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
                       <div class="avatar-circle bg-primary text-white me-2">
-                        <%= review.user.name.charAt(0).toUpperCase() %>
+                        <%= review.user?.name?.charAt(0).toUpperCase() %>
                       </div>
                       <h6 class="mb-0"><%= review.user.name %></h6>
                     </div>
@@ -333,29 +333,31 @@
   }
 </style>
 
-<% const extraScripts = `
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     // Initialize mechanic location map
     const mechanicMap = L.map('mechanic-map').setView([
-      ${mechanic.location.coordinates[1] || 0}, 
-      ${mechanic.location.coordinates[0] || 0}
+      <%= mechanic.location.coordinates[1] || 0 %>,
+      <%= mechanic.location.coordinates[0] || 0 %>
     ], 13);
-    
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(mechanicMap);
-    
+
     // Add marker for mechanic location
     L.marker([
-      ${mechanic.location.coordinates[1] || 0}, 
-      ${mechanic.location.coordinates[0] || 0}
+      <%= mechanic.location.coordinates[1] || 0 %>,
+      <%= mechanic.location.coordinates[0] || 0 %>
     ]).addTo(mechanicMap)
       .bindPopup('Mechanic Location')
       .openPopup();
   });
 </script>
-` %>
-

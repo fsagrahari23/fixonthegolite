@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require("mongoose")
 
 const BookingSchema = new mongoose.Schema({
   user: {
@@ -18,11 +18,7 @@ const BookingSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  images: [
-    {
-      type: String,
-    },
-  ],
+  images: [String],
   location: {
     type: {
       type: String,
@@ -31,28 +27,16 @@ const BookingSchema = new mongoose.Schema({
     },
     coordinates: {
       type: [Number],
-      required: true,
+      default: [77.209, 28.6139], // Default to Delhi coordinates if not provided
       validate: {
-        validator: function (v) {
-          // Validate that coordinates are not [0, 0] and are within valid ranges
-          return (
-            Array.isArray(v) &&
-            v.length === 2 &&
-            !(v[0] === 0 && v[1] === 0) &&
-            v[0] >= -180 &&
-            v[0] <= 180 &&
-            v[1] >= -90 &&
-            v[1] <= 90
-          );
+        validator: (v) => {
+          // Validate that coordinates are not [0, 0]
+          return !(v[0] === 0 && v[1] === 0)
         },
-        message:
-          "Invalid coordinates. Longitude must be between -180 and 180, latitude between -90 and 90, and not [0, 0].",
+        message: "Invalid coordinates. Cannot be [0, 0].",
       },
     },
-    address: {
-      type: String,
-      required: true,
-    },
+    address: String,
   },
   status: {
     type: String,
@@ -60,94 +44,24 @@ const BookingSchema = new mongoose.Schema({
     default: "pending",
   },
   payment: {
-    amount: {
-      type: Number,
-    },
     status: {
       type: String,
-      enum: ["pending", "completed"],
+      enum: ["pending", "completed", "refunded"],
       default: "pending",
     },
-    transactionId: {
-      type: String,
+    amount: {
+      type: Number,
+      default: 0,
     },
-  },
-  notes: {
-    type: String,
+    transactionId: String,
   },
   requiresTowing: {
     type: Boolean,
     default: false,
   },
   towingDetails: {
-    pickupLocation: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-      },
-      coordinates: {
-        type: [Number],
-        required: function () {
-          // Only require pickup coordinates if towing is needed
-          return this.requiresTowing;
-        },
-        validate: {
-          validator: function (v) {
-            // Skip validation if towing is not required or value is not provided
-            if (!this.requiresTowing || !v) return true;
-            return (
-              Array.isArray(v) &&
-              v.length === 2 &&
-              !(v[0] === 0 && v[1] === 0) &&
-              v[0] >= -180 &&
-              v[0] <= 180 &&
-              v[1] >= -90 &&
-              v[1] <= 90
-            );
-          },
-          message:
-            "Invalid pickup coordinates. Longitude must be between -180 and 180, latitude between -90 and 90, and not [0, 0].",
-        },
-      },
-      address: {
-        type: String,
-      },
-    },
-    dropoffLocation: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-      },
-      coordinates: {
-        type: [Number],
-        required: function () {
-          // Only require dropoff coordinates if towing is needed
-          return this.requiresTowing;
-        },
-        validate: {
-          validator: function (v) {
-            // Skip validation if towing is not required or value is not provided
-            if (!this.requiresTowing || !v) return true;
-            return (
-              Array.isArray(v) &&
-              v.length === 2 &&
-              !(v[0] === 0 && v[1] === 0) &&
-              v[0] >= -180 &&
-              v[0] <= 180 &&
-              v[1] >= -90 &&
-              v[1] <= 90
-            );
-          },
-          message:
-            "Invalid dropoff coordinates. Longitude must be between -180 and 180, latitude between -90 and 90, and not [0, 0].",
-        },
-      },
-      address: {
-        type: String,
-      },
-    },
+    pickupLocation: String,
+    dropoffLocation: String,
     status: {
       type: String,
       enum: ["pending", "in-progress", "completed"],
@@ -160,11 +74,25 @@ const BookingSchema = new mongoose.Schema({
       min: 1,
       max: 5,
     },
-    comment: {
-      type: String,
+    review: String,
+    date: Date,
+  },
+  isPriority: {
+    type: Boolean,
+    default: false,
+  },
+  premiumDiscount: {
+    isApplied: {
+      type: Boolean,
+      default: false,
     },
-    createdAt: {
-      type: Date,
+    rate: {
+      type: Number,
+      default: 0,
+    },
+    plan: {
+      type: String,
+      enum: ["monthly", "yearly"],
     },
   },
   createdAt: {
@@ -175,11 +103,9 @@ const BookingSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-});
+})
 
-// Geospatial indexes (only if you plan on doing geo queries)
-BookingSchema.index({ location: "2dsphere" });
-BookingSchema.index({ "towingDetails.pickupLocation": "2dsphere" });
-BookingSchema.index({ "towingDetails.dropoffLocation": "2dsphere" });
+// Create a 2dsphere index for location
+BookingSchema.index({ location: "2dsphere" })
 
-module.exports = mongoose.model("Booking", BookingSchema);
+module.exports = mongoose.model("Booking", BookingSchema)

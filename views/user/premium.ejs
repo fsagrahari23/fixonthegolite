@@ -1,0 +1,297 @@
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="mb-0"><i class="fas fa-crown text-warning me-2"></i>Premium Membership</h1>
+      <p class="text-muted">Unlock exclusive features and benefits</p>
+    </div>
+  </div>
+
+  <% if (subscription && subscription.status === 'active' && new Date(subscription.expiresAt) > new Date()) { %>
+    <div class="alert alert-success">
+      <i class="fas fa-check-circle me-2"></i> You are currently on the <strong><%= subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) %> Premium Plan</strong>. 
+      Your membership expires on <strong><%= new Date(subscription.expiresAt).toLocaleDateString() %></strong>.
+    </div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header text-center py-4 bg-light">
+          <h4 class="mb-0">Basic</h4>
+          <p class="text-muted mb-0">For casual users</p>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div class="text-center mb-4">
+            <h2 class="mb-0">Free</h2>
+            <p class="text-muted">Forever</p>
+          </div>
+          
+          <ul class="list-unstyled mb-5">
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Book mechanics for repairs</li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Chat with assigned mechanic</li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Standard booking experience</li>
+            <li class="mb-3"><i class="fas fa-times text-danger me-2"></i> Priority service</li>
+            <li class="mb-3"><i class="fas fa-times text-danger me-2"></i> Mechanic tracking</li>
+            <li class="mb-3"><i class="fas fa-times text-danger me-2"></i> Emergency assistance</li>
+          </ul>
+          
+          <div class="mt-auto">
+            <div class="d-grid">
+              <% if (!subscription || subscription.status !== 'active') { %>
+                <button class="btn btn-outline-secondary" disabled>Current Plan</button>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+      <div class="card shadow h-100 border-primary position-relative">
+        <div class="position-absolute top-0 start-50 translate-middle">
+          <span class="badge bg-primary px-3 py-2 rounded-pill">Most Popular</span>
+        </div>
+        <div class="card-header text-center py-4 bg-primary text-white">
+          <h4 class="mb-0">Monthly Premium</h4>
+          <p class="mb-0 opacity-75">For regular riders</p>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div class="text-center mb-4">
+            <h2 class="mb-0">$9.99</h2>
+            <p class="text-muted">per month</p>
+          </div>
+          
+          <ul class="list-unstyled mb-5">
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>All Basic features</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>Priority service</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>Real-time mechanic tracking</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>10% discount on services</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Cancel anytime</li>
+            <li class="mb-3"><i class="fas fa-times text-danger me-2"></i> Emergency roadside assistance</li>
+          </ul>
+          
+          <div class="mt-auto">
+            <div class="d-grid">
+              <% if (subscription && subscription.status === 'active' && subscription.plan === 'monthly') { %>
+                <form action="/user/premium/cancel" method="POST">
+                  <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel your subscription?')">
+                    <i class="fas fa-times-circle me-2"></i> Cancel Subscription
+                  </button>
+                </form>
+              <% } else { %>
+                <form action="/user/premium/subscribe" method="POST">
+                  <input type="hidden" name="plan" value="monthly">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-crown me-2"></i> Subscribe Now
+                  </button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header text-center py-4 bg-dark text-white">
+          <h4 class="mb-0">Yearly Premium</h4>
+          <p class="mb-0 opacity-75">Best value</p>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div class="text-center mb-4">
+            <h2 class="mb-0">$99.99</h2>
+            <p class="text-muted">per year <span class="badge bg-danger">Save 17%</span></p>
+          </div>
+          
+          <ul class="list-unstyled mb-5">
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>All Monthly Premium features</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>15% discount on services</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>Emergency roadside assistance</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>Free towing service (2x/year)</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> <strong>Quarterly bike maintenance check</strong></li>
+            <li class="mb-3"><i class="fas fa-check text-success me-2"></i> Priority customer support</li>
+          </ul>
+          
+          <div class="mt-auto">
+            <div class="d-grid">
+              <% if (subscription && subscription.status === 'active' && subscription.plan === 'yearly') { %>
+                <form action="/user/premium/cancel" method="POST">
+                  <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel your subscription?')">
+                    <i class="fas fa-times-circle me-2"></i> Cancel Subscription
+                  </button>
+                </form>
+              <% } else { %>
+                <form action="/user/premium/subscribe" method="POST">
+                  <input type="hidden" name="plan" value="yearly">
+                  <button type="submit" class="btn btn-dark">
+                    <i class="fas fa-crown me-2"></i> Subscribe Now
+                  </button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-5">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h4 class="mb-4">Premium Benefits in Detail</h4>
+          
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="d-flex">
+                <div class="flex-shrink-0">
+                  <div class="icon-circle bg-primary text-white">
+                    <i class="fas fa-bolt"></i>
+                  </div>
+                </div>
+                <div class="ms-3">
+                  <h5>Priority Service</h5>
+                  <p class="text-muted mb-0">Your booking requests will be prioritized over non-premium users, ensuring faster service.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="d-flex">
+                <div class="flex-shrink-0">
+                  <div class="icon-circle bg-primary text-white">
+                    <i class="fas fa-map-marked-alt"></i>
+                  </div>
+                </div>
+                <div class="ms-3">
+                  <h5>Real-time Mechanic Tracking</h5>
+                  <p class="text-muted mb-0">Track your mechanic's location in real-time and get accurate ETA updates.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="d-flex">
+                <div class="flex-shrink-0">
+                  <div class="icon-circle bg-primary text-white">
+                    <i class="fas fa-percentage"></i>
+                  </div>
+                </div>
+                <div class="ms-3">
+                  <h5>Service Discounts</h5>
+                  <p class="text-muted mb-0">Get exclusive discounts on all services, helping you save money on repairs.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="d-flex">
+                <div class="flex-shrink-0">
+                  <div class="icon-circle bg-primary text-white">
+                    <i class="fas fa-ambulance"></i>
+                  </div>
+                </div>
+                <div class="ms-3">
+                  <h5>Emergency Roadside Assistance</h5>
+                  <p class="text-muted mb-0">Get 24/7 emergency assistance for breakdowns and other roadside emergencies.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="d-flex">
+                <div class="flex-shrink-0">
+                  <div class="icon-circle bg-primary text-white">
+                    <i class="fas fa-truck-pickup"></i>
+                  </div>
+                </div>
+                <div class="ms-3">
+                  <h5>Free Towing Service</h5>
+                  <p class="text-muted mb-0">Yearly plan includes free towing services twice per year for situations where on-site repair isn't possible.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="d-flex">
+                <div class="flex-shrink-0">
+                  <div class="icon-circle bg-primary text-white">
+                    <i class="fas fa-tools"></i>
+                  </div>
+                </div>
+                <div class="ms-3">
+                  <h5>Maintenance Checks</h5>
+                  <p class="text-muted mb-0">Yearly premium members receive quarterly bike maintenance checks to prevent breakdowns.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card bg-light border-0">
+        <div class="card-body p-4">
+          <h5>Frequently Asked Questions</h5>
+          
+          <div class="accordion mt-3" id="faqAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqOne">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                  Can I cancel my subscription anytime?
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Yes, you can cancel your subscription at any time. Your premium benefits will remain active until the end of your current billing period.
+                </div>
+              </div>
+            </div>
+            
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                  How do I access emergency roadside assistance?
+                </button>
+              </h2>
+              <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  For emergency assistance, you can use the "Emergency" button in the app which is available to premium members. Our support team will coordinate assistance for you 24/7.
+                </div>
+              </div>
+            </div>
+            
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="faqThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                  How is the service discount applied?
+                </button>
+              </h2>
+              <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  The discount is automatically applied to your bill when the mechanic completes the service. Monthly members receive 10% off, while yearly members enjoy 15% off all services.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .icon-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+</style>

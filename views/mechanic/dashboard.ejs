@@ -264,7 +264,78 @@
           </div>
           <% } %>
         </div>
+        
       </div>
+      <div class="card">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">
+            <i class="fas fa-bell text-primary me-2"></i>
+            User Requested Booking Requests
+          </h5>
+        </div>
+        <div class="card-body">
+          <% if (userRequestedJob.length === 0) { %>
+          <div class="text-center py-4">
+            <img
+              src="/images/empty-requests.png"
+              alt="No Requests"
+              class="img-fluid mb-3"
+              style="max-width: 150px"
+            />
+            <h5>No nearby requests by users for you</h5>
+            <p class="text-muted">
+              There are no booking requests , reuested by user at the moment.
+            </p>
+          </div>
+          <% } else { %>
+          <div class="row">
+            <% userRequestedJob.forEach(booking => { %>
+            <div class="col-md-6 mb-3">
+              <div class="card h-100 booking-request-card">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between mb-3">
+                    <h6 class="card-title mb-0">
+                      <%= booking.problemCategory %>
+                    </h6>
+                    <span class="badge bg-warning text-dark">New</span>
+                  </div>
+                  <p
+                    class="card-text text-truncate mb-2"
+                    title="<%= booking.description %>"
+                  >
+                    <%= booking.description %>
+                  </p>
+                  <div class="d-flex align-items-center mb-3">
+                    <div class="avatar-circle bg-primary text-white me-2">
+                      <%= booking.user.name.charAt(0).toUpperCase() %>
+                    </div>
+                    <span><%= booking.user.name %></span>
+                  </div>
+                  <div
+                    class="d-flex justify-content-between align-items-center"
+                  >
+                    <small class="text-muted">
+                      <i class="fas fa-clock me-1"></i>
+                      <%= new Date(booking.createdAt).toLocaleTimeString([], {
+                      hour: '2-digit', minute: '2-digit' }) %>
+                    </small>
+                    <a
+                      href="/mechanic/booking/<%= booking._id %>"
+                      class="btn btn-sm btn-primary"
+                    >
+                      View Details
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <% }); %>
+          </div>
+          <% } %>
+        </div>
+        
+      </div>
+
     </div>
 
     <!-- Right Column: Profile, Stats & Location -->

@@ -97,7 +97,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0">$<%= totalRevenue %></h3>
+              <h3 class="mb-0">$<%= totalAmount %></h3>
               <p class="mb-0">Total Revenue</p>
             </div>
             <div class="stats-icon">
@@ -114,7 +114,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0"><%= completedPayments %></h3>
+              <h3 class="mb-0"><%=  %></h3>
               <p class="mb-0">Completed Payments</p>
             </div>
             <div class="stats-icon">
@@ -131,7 +131,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0"><%= pendingPayments %></h3>
+              <h3 class="mb-0"><%=  %></h3>
               <p class="mb-0">Pending Payments</p>
             </div>
             <div class="stats-icon">
@@ -145,123 +145,153 @@
 
   <div class="row">
     <div class="col-md-12">
-      <div class="card border-0 shadow-sm">
-        <div
-          class="card-header bg-white d-flex justify-content-between align-items-center"
-        >
+  
+      <!-- Booking Payments -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
-            <i class="fas fa-list text-primary me-2"></i>All Payments
+            <i class="fas fa-list text-primary me-2"></i>Booking Payments
           </h5>
-          <span class="badge bg-primary rounded-pill"
-            ><%= payments.length %> Payments</span
-          >
+          <span class="badge bg-primary rounded-pill"><%= payments.length %> Payments</span>
         </div>
         <div class="card-body p-0">
           <% if (payments.length === 0) { %>
-          <div class="text-center py-5">
-            <img
-              src="/images/empty-payments.png"
-              alt="No Payments"
-              class="img-fluid mb-3"
-              style="max-width: 200px"
-            />
-            <h5>No payments found</h5>
-            <p class="text-muted">There are no payments in the system yet.</p>
-          </div>
+            <div class="text-center py-5">
+              <img src="/images/empty-payments.png" alt="No Payments" class="img-fluid mb-3" style="max-width: 200px" />
+              <h5>No payments found</h5>
+              <p class="text-muted">There are no payments in the system yet.</p>
+            </div>
           <% } else { %>
-          <div class="table-responsive">
-            <table class="table table-hover align-middle" id="paymentsTable">
-              <thead class="table-light">
-                <tr>
-                  <th>Booking ID</th>
-                  <th>Date</th>
-                  <th>Customer</th>
-                  <th>Mechanic</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Transaction ID</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% payments.forEach(payment => { %>
-                <tr
-                  data-status="<%= payment.payment.status %>"
-                  data-amount="<%= payment.payment.amount %>"
-                  data-date="<%= new Date(payment.updatedAt).toISOString() %>"
-                >
-                  <td>
-                    <small class="text-muted"
-                      ><%= payment._id.toString().substring(0, 8) %>...</small
-                    >
-                  </td>
-                  <td>
-                    <div class="d-flex flex-column">
-                      <span
-                        ><%= new Date(payment.updatedAt).toLocaleDateString()
-                        %></span
-                      >
-                      <small class="text-muted"
-                        ><%= new Date(payment.updatedAt).toLocaleTimeString()
-                        %></small
-                      >
-                    </div>
-                  </td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div class="avatar-circle bg-primary text-white me-2">
-                        <%= payment.user.name.charAt(0).toUpperCase() %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle" id="paymentsTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Booking ID</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Mechanic</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Transaction ID</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% payments.forEach(payment => { %>
+                  <tr data-status="<%= payment.payment.status %>">
+                    <td><small class="text-muted"><%= payment._id.toString().substring(0, 8) %>...</small></td>
+                    <td>
+                      <div class="d-flex flex-column">
+                        <span><%= new Date(payment.updatedAt).toLocaleDateString() %></span>
+                        <small class="text-muted"><%= new Date(payment.updatedAt).toLocaleTimeString() %></small>
                       </div>
-                      <span><%= payment.user.name %></span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div class="avatar-circle bg-success text-white me-2">
-                        <%= payment.mechanic.name.charAt(0).toUpperCase() %>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-circle bg-primary text-white me-2">
+                          <%= payment.user.name.charAt(0).toUpperCase() %>
+                        </div>
+                        <span><%= payment.user.name %></span>
                       </div>
-                      <span><%= payment.mechanic.name %></span>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="fw-bold text-success"
-                      >$<%= payment.payment.amount.toFixed(2) %></span
-                    >
-                  </td>
-                  <td>
-                    <% if (payment.payment.status === 'completed') { %>
-                    <span class="badge bg-success">Completed</span>
-                    <% } else { %>
-                    <span class="badge bg-warning text-dark">Pending</span>
-                    <% } %>
-                  </td>
-                  <td>
-                    <% if (payment.payment.transactionId) { %>
-                    <small class="text-muted"
-                      ><%= payment.payment.transactionId %></small
-                    >
-                    <% } else { %>
-                    <span class="text-muted">N/A</span>
-                    <% } %>
-                  </td>
-                  <td>
-                    <a
-                      href="/admin/booking/<%= payment._id %>"
-                      class="btn btn-sm btn-primary"
-                    >
-                      <i class="fas fa-eye"></i> View
-                    </a>
-                  </td>
-                </tr>
-                <% }) %>
-              </tbody>
-            </table>
-          </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-circle bg-success text-white me-2">
+                          <%= payment.mechanic.name.charAt(0).toUpperCase() %>
+                        </div>
+                        <span><%= payment.mechanic.name %></span>
+                      </div>
+                    </td>
+                    <td><span class="fw-bold text-success">$<%= payment.payment.amount.toFixed(2) %></span></td>
+                    <td>
+                      <% if (payment.payment.status === 'completed') { %>
+                        <span class="badge bg-success">Completed</span>
+                      <% } else { %>
+                        <span class="badge bg-warning text-dark">Pending</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (payment.payment.transactionId) { %>
+                        <small class="text-muted"><%= payment.payment.transactionId %></small>
+                      <% } else { %>
+                        <span class="text-muted">N/A</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <a href="/admin/booking/<%= payment._id %>" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                    </td>
+                  </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
           <% } %>
         </div>
       </div>
+  
+      <!-- Subscription Payments -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-star text-warning me-2"></i>Subscription Payments
+          </h5>
+          <span class="badge bg-warning text-dark rounded-pill"><%= subscriptions.length %> Subscriptions</span>
+        </div>
+        <div class="card-body p-0">
+          <% if (subscriptions.length === 0) { %>
+            <div class="text-center py-5">
+              <img src="/images/empty-subscription.png" alt="No Subscriptions" class="img-fluid mb-3" style="max-width: 200px" />
+              <h5>No subscriptions found</h5>
+              <p class="text-muted">There are no active subscriptions in the system.</p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle" id="subscriptionsTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>Subscription ID</th>
+                    <th>Date</th>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% subscriptions.forEach(sub => { %>
+                  <tr>
+                    <td><small class="text-muted"><%= sub._id.toString().substring(0, 8) %>...</small></td>
+                    <td>
+                      <div class="d-flex flex-column">
+                        <span><%= new Date(sub.createdAt).toLocaleDateString() %></span>
+                        <small class="text-muted"><%= new Date(sub.createdAt).toLocaleTimeString() %></small>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-circle bg-info text-white me-2">
+                          <%= sub.user.name.charAt(0).toUpperCase() %>
+                        </div>
+                        <span><%= sub.user.name %></span>
+                      </div>
+                    </td>
+                    <td><%= sub.user.email %></td>
+                    <td><span class="fw-bold text-success">$<%= sub.amount.toFixed(2) %></span></td>
+                    <td><span class="badge bg-warning text-dark">Active</span></td>
+                  </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+  
     </div>
   </div>
+  
 
   <div class="row mt-4">
     <div class="col-md-6">
@@ -291,7 +321,6 @@
   </div>
 </div>
 
-<% const extraScripts = `
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const searchInput = document.getElementById("searchPayment");
@@ -496,4 +525,4 @@
     }
   });
 </script>
-` %>
+

@@ -15,7 +15,7 @@ router.get("/dashboard", async (req, res) => {
     const bookings = await Booking.find({ mechanic: req.user._id })
       .populate("user", "name phone")
       .sort({ createdAt: -1 });
-    console.log(bookings);
+   
     // Get stats
     const stats = {
       total: bookings.length,
@@ -44,27 +44,38 @@ router.get("/dashboard", async (req, res) => {
       (sum, booking) => sum + booking.payment.amount,
       0
     );
-    const allBookings = await Booking.find();
-    console.log(allBookings);
-    console.log(req.user.location.coordinates);
+   
     // Get nearby pending bookings
     const nearbyBookings = await Booking.find({
-      mechanic: null,
+      status: "pending",
+      mechanic:null,
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates:req.user.location.coordinates 
+          },
+          $maxDistance: 10000
+        }
+      }
+    })
+      .populate("user", "name")
+      .limit(5);
+
+    const userRequestedJob = await Booking.find({
+      mechanic: req.user._id,
       status: "pending",
       location: {
         $near: {
           $geometry: {
             type: "Point",
-            coordinates: req.user.location.coordinates,
+            coordinates:req.user.location.coordinates 
           },
-          $maxDistance: 10000, // 10km
-        },
-      },
-    })
-      .populate("user", "name")
-      .limit(5);
-
-    console.log(nearbyBookings);
+          $maxDistance: 10000
+        }
+      }
+    }).populate("user", "name");
+    
 
     res.render("mechanic/dashboard", {
       title: "Mechanic Dashboard",
@@ -74,7 +85,8 @@ router.get("/dashboard", async (req, res) => {
       stats,
       totalEarnings,
       todayEarnings,
-      nearbyBookings,
+      nearbyBookings, 
+      userRequestedJob
     });
   } catch (error) {
     console.error("Mechanic dashboard error:", error);

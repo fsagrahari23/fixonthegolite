@@ -18,11 +18,36 @@
     <div class="col-lg-8 mx-auto">
       <div class="card border-0 shadow-sm">
         <div class="card-header bg-white">
-          <h5 class="mb-0">
-            <i class="fas fa-tools text-primary me-2"></i>Book a Mechanic
-          </h5>
+          <h3 class="mb-0">
+            <i class="fas fa-wrench text-primary me-2"></i>Book a Mechanic
+            <% if (locals.isPremium) { %>
+              <span class="badge bg-warning ms-2" title="Premium Member"><i class="fas fa-crown"></i></span>
+            <% } %>
+          </h3>
         </div>
         <div class="card-body">
+          <!-- Premium feature badge -->
+          <% if (locals.isPremium) { %>
+            <div class="alert alert-warning mb-4">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-crown text-warning me-3 fa-2x"></i>
+                <div>
+                  <h5 class="mb-1">Premium Benefits Active</h5>
+                  <p class="mb-0">You'll receive priority service, <%= locals.isPremium.plan === 'monthly' ? '10%' : '15%' %> discount, and real-time mechanic tracking!</p>
+                </div>
+              </div>
+            </div>
+            <% } else { %>
+            <div class="alert alert-info mb-4">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-info-circle text-info me-3 fa-2x"></i>
+                <div>
+                  <h5 class="mb-1">Basic User Booking Limit</h5>
+                  <p class="mb-0">Basic users are limited to 2 active bookings at a time. <a href="/user/premium" class="fw-bold">Upgrade to Premium</a> for unlimited bookings.</p>
+                </div>
+              </div>
+            </div>
+            <% } %>
           <form
             action="/user/book"
             method="POST"
@@ -30,9 +55,7 @@
             id="booking-form"
           >
             <div class="mb-4">
-              <label for="problemCategory" class="form-label"
-                >Problem Category</label
-              >
+              <label for="problemCategory" class="form-label">Problem Category <span class="text-danger">*</span></label>
               <select
                 class="form-select"
                 id="problemCategory"
@@ -51,20 +74,14 @@
             </div>
 
             <div class="mb-4">
-              <label for="description" class="form-label">Description</label>
-              <textarea
-                class="form-control"
-                id="description"
-                name="description"
-                rows="4"
-                placeholder="Please describe the issue in detail..."
-                required
-              ></textarea>
+              <label for="description" class="form-label">Problem Description <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="description" name="description" rows="5" placeholder="Please describe the problem in detail..." required></textarea>
+              <div class="form-text">Be as specific as possible to help the mechanic prepare.</div>
             </div>
 
             <div class="mb-4">
               <label class="form-label">Upload Images (Optional)</label>
-              <div class="input-group">
+              <div class="input-group mb-3">
                 <input
                   type="file"
                   class="form-control"

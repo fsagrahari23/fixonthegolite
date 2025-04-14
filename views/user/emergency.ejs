@@ -1,0 +1,234 @@
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="mb-0"><i class="fas fa-ambulance text-danger me-2"></i>Emergency Assistance</h1>
+      <p class="text-muted">Premium feature for yearly subscribers</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-body p-4">
+          <div class="alert alert-danger" role="alert">
+            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Request Emergency Assistance</h5>
+            <p>Use this form to request immediate assistance for urgent bike problems. An available mechanic will be dispatched to your location with priority.</p>
+          </div>
+          
+          <form action="/user/emergency" method="POST" id="emergency-form">
+            <div class="mb-3">
+              <label for="address" class="form-label">Your Current Location</label>
+              <div class="input-group mb-3">
+                <input type="text" class="form-control" id="address" name="address" required placeholder="Enter your current address">
+                <button class="btn btn-outline-secondary" type="button" id="get-location">
+                  <i class="fas fa-map-marker-alt"></i>
+                </button>
+              </div>
+              <div id="location-map" style="height: 300px; margin-bottom: 15px;"></div>
+              <input type="hidden" id="latitude" name="latitude" required>
+              <input type="hidden" id="longitude" name="longitude" required>
+            </div>
+            
+            <div class="mb-4">
+              <label for="problemDescription" class="form-label">Describe the Emergency</label>
+              <textarea class="form-control" id="problemDescription" name="problemDescription" rows="4" required placeholder="Please describe your emergency situation in detail"></textarea>
+            </div>
+            
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="confirm-emergency" required>
+              <label class="form-check-label" for="confirm-emergency">
+                I confirm this is a genuine emergency situation requiring immediate assistance
+              </label>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-danger btn-lg">
+                <i class="fas fa-ambulance me-2"></i> Request Emergency Assistance
+              </button>
+              <a href="/user/dashboard" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+          <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>About Emergency Assistance</h5>
+        </div>
+        <div class="card-body">
+          <p>As a yearly premium subscriber, you have exclusive access to our emergency assistance service.</p>
+          
+          <div class="d-flex mb-3">
+            <div class="feature-icon bg-danger-light text-danger me-3">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <div>
+              <h6 class="mb-1">Priority Response</h6>
+              <p class="text-muted mb-0 small">Your request gets the highest priority in our system</p>
+            </div>
+          </div>
+          
+          <div class="d-flex mb-3">
+            <div class="feature-icon bg-danger-light text-danger me-3">
+              <i class="fas fa-user-clock"></i>
+            </div>
+            <div>
+              <h6 class="mb-1">24/7 Availability</h6>
+              <p class="text-muted mb-0 small">Emergency assistance is available at any time</p>
+            </div>
+          </div>
+          
+          <div class="d-flex">
+            <div class="feature-icon bg-danger-light text-danger me-3">
+              <i class="fas fa-tools"></i>
+            </div>
+            <div>
+              <h6 class="mb-1">Specialized Mechanics</h6>
+              <p class="text-muted mb-0 small">Our emergency team is equipped to handle critical situations</p>
+            </div>
+          </div>
+          
+          <hr>
+          
+          <div class="alert alert-warning mt-3 mb-0">
+            <p class="mb-0 small"><strong>Note:</strong> Please use this service only for genuine emergencies. Misuse may result in suspension of this feature.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fas fa-phone-alt me-2"></i>Need to Talk Instead?</h5>
+        </div>
+        <div class="card-body text-center py-4">
+          <i class="fas fa-headset fa-3x text-primary mb-3"></i>
+          <h5>Emergency Hotline</h5>
+          <p class="lead mb-3">(800) 555-BIKE</p>
+          <p class="text-muted">Available 24/7 for premium members</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .bg-danger-light {
+    background-color: rgba(220, 53, 69, 0.1);
+  }
+  
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+</style>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map
+    const map = L.map('location-map').setView([28.6139, 77.209], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    let marker;
+    
+    // Function to update marker position
+    function updateMarker(lat, lng) {
+      // Update hidden inputs
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lng;
+      
+      // Update or create marker
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng]).addTo(map);
+      }
+      
+      map.setView([lat, lng], 15);
+    }
+    
+    // Get user location
+    document.getElementById('get-location').addEventListener('click', function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          
+          updateMarker(lat, lng);
+          
+          // Reverse geocode to get address
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('address').value = data.display_name;
+            })
+            .catch(error => {
+              console.error('Error getting address:', error);
+            });
+        }, function(error) {
+          console.error('Geolocation error:', error);
+          alert('Could not get your location. Please enter your address manually.');
+        });
+      } else {
+        alert('Geolocation is not supported by your browser');
+      }
+    });
+    
+    // Click on map to set marker
+    map.on('click', function(e) {
+      updateMarker(e.latlng.lat, e.latlng.lng);
+      
+      // Reverse geocode to get address
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('address').value = data.display_name;
+        })
+        .catch(error => {
+          console.error('Error getting address:', error);
+        });
+    });
+    
+    // Form validation
+    document.getElementById('emergency-form').addEventListener('submit', function(e) {
+      const lat = document.getElementById('latitude').value;
+      const lng = document.getElementById('longitude').value;
+      
+      if (!lat || !lng) {
+        e.preventDefault();
+        alert('Please select your location on the map');
+      }
+    });
+    
+    // Try to get user's current location on page load
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        updateMarker(position.coords.latitude, position.coords.longitude);
+        
+        // Reverse geocode to get address
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('address').value = data.display_name;
+          })
+          .catch(error => {
+            console.error('Error getting address:', error);
+          });
+      });
+    }
+  });
+</script>
+

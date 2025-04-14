@@ -1,0 +1,368 @@
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Manage Subscriptions</li>
+        </ol>
+      </nav>
+      
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-0"><i class="fas fa-crown text-warning me-2"></i>Manage Subscriptions</h1>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h5 class="mb-0"><i class="fas fa-filter text-primary me-2"></i>Filter Subscriptions</h5>
+            </div>
+            <div class="col-md-4">
+              <div class="input-group">
+                <input type="text" class="form-control" id="searchSubscription" placeholder="Search subscriptions...">
+                <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label for="statusFilter" class="form-label">Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="all">All Subscriptions</option>
+                <option value="active">Active</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="planFilter" class="form-label">Plan</label>
+              <select class="form-select" id="planFilter">
+                <option value="all">All Plans</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label for="dateFrom" class="form-label">From Date</label>
+              <input type="date" class="form-control" id="dateFrom">
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary" id="applyFilters">
+              <i class="fas fa-filter me-2"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>All Subscriptions</h5>
+          <span class="badge bg-primary rounded-pill"><%= subscriptions.length %> Subscriptions</span>
+        </div>
+        <div class="card-body p-0">
+          <% if (subscriptions.length === 0) { %>
+            <div class="text-center py-5">
+              <img src="/images/empty-approvals.png" alt="No Subscriptions" class="img-fluid mb-3" style="max-width: 200px;">
+              <h5>No subscriptions found</h5>
+              <p class="text-muted">There are no premium subscriptions in the system yet.</p>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle" id="subscriptionsTable">
+                <thead class="table-light">
+                  <tr>
+                    <th>User</th>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Start Date</th>
+                    <th>Expires</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% subscriptions.forEach(subscription => { %>
+                    <tr data-date="<%= new Date(subscription.createdAt).toISOString() %>">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle bg-primary text-white me-2">
+                            <%= subscription.user.name.charAt(0).toUpperCase() %>
+                          </div>
+                          <div>
+                            <span><%= subscription.user.name %></span>
+                            <small class="d-block text-muted"><%= subscription.user.email %></small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <% if (subscription.plan === 'monthly') { %>
+                          <span class="badge bg-primary">Monthly</span>
+                        <% } else { %>
+                          <span class="badge bg-dark">Yearly</span>
+                        <% } %>
+                      </td>
+                      <td>$<%= subscription.amount.toFixed(2) %></td>
+                      <td><%= new Date(subscription.startDate).toLocaleDateString() %></td>
+                      <td><%= new Date(subscription.expiresAt).toLocaleDateString() %></td>
+                      <td>
+                        <% if (subscription.status === 'active' && new Date(subscription.expiresAt) > new Date()) { %>
+                          <span class="badge bg-success">Active</span>
+                        <% } else if (subscription.status === 'cancelled') { %>
+                          <span class="badge bg-danger">Cancelled</span>
+                        <% } else { %>
+                          <span class="badge bg-secondary">Expired</span>
+                        <% } %>
+                      </td>
+                      <td>
+                        <div class="btn-group">
+                          <a href="/admin/user/<%= subscription.user._id %>" class="btn btn-sm btn-primary">
+                            <i class="fas fa-user"></i> View User
+                          </a>
+                          <% if (subscription.status === 'active' && new Date(subscription.expiresAt) > new Date()) { %>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal<%= subscription._id %>">
+                              <i class="fas fa-times"></i> Cancel
+                            </button>
+                          <% } %>
+                        </div>
+                        
+                        <!-- Cancel Subscription Modal -->
+                        <div class="modal fade" id="cancelModal<%= subscription._id %>" tabindex="-1" aria-labelledby="cancelModalLabel<%= subscription._id %>" aria-hidden="true">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="cancelModalLabel<%= subscription._id %>">Cancel Subscription</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <p>Are you sure you want to cancel the <%= subscription.plan %> subscription for <strong><%= subscription.user.name %></strong>?</p>
+                                <p class="text-danger">This action will immediately remove premium benefits from this user.</p>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form action="/admin/subscription/<%= subscription._id %>/cancel" method="POST">
+                                  <button type="submit" class="btn btn-danger">Cancel Subscription</button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-chart-pie text-primary me-2"></i>Subscription Plans</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="plansChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-chart-line text-primary me-2"></i>Monthly Revenue</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="revenueChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% const extraScripts = `
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchSubscription');
+    const searchButton = document.getElementById('searchButton');
+    const statusFilter = document.getElementById('statusFilter');
+    const planFilter = document.getElementById('planFilter');
+    const dateFromFilter = document.getElementById('dateFrom');
+    const applyFiltersBtn = document.getElementById('applyFilters');
+    const subscriptionsTable = document.getElementById('subscriptionsTable');
+    const tableRows = subscriptionsTable ? subscriptionsTable.querySelectorAll('tbody tr') : [];
+    
+    // Apply filters function
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const statusValue = statusFilter.value;
+      const planValue = planFilter.value;
+      const dateFromValue = dateFromFilter.value ? new Date(dateFromFilter.value) : null;
+      
+      tableRows.forEach(row => {
+        const date = new Date(row.getAttribute('data-date'));
+        const rowText = row.textContent.toLowerCase();
+        const statusCell = row.querySelector('td:nth-child(6)');
+        const statusText = statusCell ? statusCell.textContent.toLowerCase() : '';
+        const planCell = row.querySelector('td:nth-child(2)');
+        const planText = planCell ? planCell.textContent.toLowerCase() : '';
+        
+        const statusMatch = statusValue === 'all' || 
+                          (statusValue === 'active' && statusText.includes('active')) ||
+                          (statusValue === 'cancelled' && statusText.includes('cancelled')) ||
+                          (statusValue === 'expired' && statusText.includes('expired'));
+                          
+        const planMatch = planValue === 'all' || 
+                        (planValue === 'monthly' && planText.includes('monthly')) ||
+                        (planValue === 'yearly' && planText.includes('yearly'));
+                        
+        const searchMatch = !searchTerm || rowText.includes(searchTerm);
+        
+        let dateMatch = true;
+        if (dateFromValue) {
+          dateMatch = date >= dateFromValue;
+        }
+        
+        if (statusMatch && planMatch && searchMatch && dateMatch) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+    
+    // Event listeners
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+    
+    if (searchButton) {
+      searchButton.addEventListener('click', applyFilters);
+    }
+    
+    if (searchInput) {
+      searchInput.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+          applyFilters();
+        }
+      });
+    }
+    
+    // Initialize charts
+    if (document.getElementById('plansChart')) {
+      // Subscription plans chart
+      const plansCtx = document.getElementById('plansChart').getContext('2d');
+      
+      // Count monthly and yearly subscriptions
+      let monthlyCount = 0;
+      let yearlyCount = 0;
+      tableRows.forEach(row => {
+        const planCell = row.querySelector('td:nth-child(2)');
+        const planText = planCell ? planCell.textContent.trim() : '';
+        const statusCell = row.querySelector('td:nth-child(6)');
+        const statusText = statusCell ? statusCell.textContent.trim() : '';
+        
+        if (statusText.includes('Active')) {
+          if (planText.includes('Monthly')) {
+            monthlyCount++;
+          } else if (planText.includes('Yearly')) {
+            yearlyCount++;
+          }
+        }
+      });
+      
+      new Chart(plansCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Monthly Subscriptions', 'Yearly Subscriptions'],
+          datasets: [{
+            data: [monthlyCount, yearlyCount],
+            backgroundColor: ['#4361ee', '#3a0ca3'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                padding: 15
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+    
+    if (document.getElementById('revenueChart')) {
+      // Prepare data for revenue chart (last 6 months)
+      const months = [];
+      const revenues = [0, 0, 0, 0, 0, 0];
+      
+      // Get last 6 months
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        months.push(date.toLocaleString('default', { month: 'short' }));
+      }
+      
+      // Sample revenue data - in a real implementation, this would come from the database
+      const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+      new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [{
+            label: 'Subscription Revenue',
+            data: [290, 358, 520, 498, 680, 825],
+            borderColor: '#4361ee',
+            backgroundColor: 'rgba(67, 97, 238, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + value;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+</script>
+` %>

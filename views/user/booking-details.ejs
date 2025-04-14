@@ -121,7 +121,7 @@
           </div>
         </div>
         <% } %> <% if (booking.status === 'completed' && booking.payment &&
-        booking.payment.status === 'completed' && !booking.rating) { %>
+        booking.payment.status === 'completed' && (!booking.rating.value)) { %>
         <div class="mt-4">
           <h6 class="fw-bold">Rate Your Mechanic</h6>
           <div class="card bg-light border-0">

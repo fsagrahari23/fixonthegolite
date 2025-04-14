@@ -178,9 +178,8 @@
   </div>
 </div>
 
-<% const extraScripts = `
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('searchUser');
     const searchButton = document.getElementById('searchButton');
     const statusFilter = document.getElementById('statusFilter');
@@ -189,25 +188,25 @@
     const applyFiltersBtn = document.getElementById('applyFilters');
     const usersTable = document.getElementById('usersTable');
     const tableRows = usersTable ? usersTable.querySelectorAll('tbody tr') : [];
-    
+
     // Apply filters function
     function applyFilters() {
       const searchTerm = searchInput.value.toLowerCase();
       const statusValue = statusFilter.value;
       const dateFromValue = dateFromFilter.value ? new Date(dateFromFilter.value) : null;
       const dateToValue = dateToFilter.value ? new Date(dateToFilter.value) : null;
-      
+
       tableRows.forEach(row => {
         const date = new Date(row.getAttribute('data-date'));
         const rowText = row.textContent.toLowerCase();
         const statusCell = row.querySelector('td:nth-child(6)');
         const statusText = statusCell ? statusCell.textContent.toLowerCase() : '';
-        
-        const statusMatch = statusValue === 'all' || 
-                          (statusValue === 'active' && statusText.includes('active')) ||
-                          (statusValue === 'inactive' && statusText.includes('inactive'));
+
+        const statusMatch = statusValue === 'all' ||
+          (statusValue === 'active' && statusText.includes('active')) ||
+          (statusValue === 'inactive' && statusText.includes('inactive'));
         const searchMatch = !searchTerm || rowText.includes(searchTerm);
-        
+
         let dateMatch = true;
         if (dateFromValue && dateToValue) {
           dateMatch = date >= dateFromValue && date <= dateToValue;
@@ -216,7 +215,7 @@
         } else if (dateToValue) {
           dateMatch = date <= dateToValue;
         }
-        
+
         if (statusMatch && searchMatch && dateMatch) {
           row.style.display = '';
         } else {
@@ -224,47 +223,42 @@
         }
       });
     }
-    
+
     // Event listeners
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener('click', applyFilters);
     }
-    
+
     if (searchButton) {
       searchButton.addEventListener('click', applyFilters);
     }
-    
+
     if (searchInput) {
-      searchInput.addEventListener('keyup', function(e) {
+      searchInput.addEventListener('keyup', function (e) {
         if (e.key === 'Enter') {
           applyFilters();
         }
       });
     }
-    
-    // Initialize charts
+
+    // Registration Chart
     if (document.getElementById('registrationChart')) {
-      // Prepare data for registration chart (last 6 months)
       const months = [];
       const registrations = [];
-      
-      // Get last 6 months
+
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         months.push(date.toLocaleString('default', { month: 'short' }));
-        registrations.push(0); // Initialize with 0
+        registrations.push(0);
       }
-      
-      // Calculate registrations for each month
+
       tableRows.forEach(row => {
         const date = new Date(row.getAttribute('data-date'));
-        
-        // Check if date is within last 6 months
         const currentDate = new Date();
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
-        
+
         if (date >= sixMonthsAgo) {
           const monthIndex = currentDate.getMonth() - date.getMonth();
           const normalizedIndex = monthIndex < 0 ? monthIndex + 12 : monthIndex;
@@ -273,7 +267,7 @@
           }
         }
       });
-      
+
       const registrationCtx = document.getElementById('registrationChart').getContext('2d');
       new Chart(registrationCtx, {
         type: 'bar',
@@ -306,16 +300,16 @@
         }
       });
     }
-    
+
+    // Activity Chart
     if (document.getElementById('activityChart')) {
-      // Sample data for activity chart
       const activityCtx = document.getElementById('activityChart').getContext('2d');
       new Chart(activityCtx, {
         type: 'doughnut',
         data: {
           labels: ['Active Users', 'Inactive Users'],
           datasets: [{
-            data: [${users.length}, 0],
+            data: [<%= users.length %>, 0], // Use EJS syntax correctly here
             backgroundColor: ['#38b000', '#ef476f'],
             borderWidth: 0
           }]
@@ -338,5 +332,6 @@
     }
   });
 </script>
-` %>
+
+
 

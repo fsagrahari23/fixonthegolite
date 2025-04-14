@@ -2,15 +2,53 @@
   <div class="row">
     <div class="col-md-12">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">
-          <i class="fas fa-tachometer-alt text-primary me-2"></i>User Dashboard
+        <h1 class="mb-0"><i class="fas fa-tachometer-alt text-primary me-2"></i>User Dashboard
+          <% if (isPremium) { %>
+            <span class="badge bg-warning ms-2" title="Premium Member"><i class="fas fa-crown"></i></span>
+          <% } %>
         </h1>
-        <a href="/user/book" class="btn btn-primary">
-          <i class="fas fa-plus me-2"></i> New Booking
-        </a>
+        <div class="container mt-3">
+          <div class="row g-2">
+            <div class="col-12 col-md-4">
+              <a href="/user/book" class="btn btn-primary w-100">
+                <i class="fas fa-plus me-2"></i> New Booking
+              </a>
+            </div>
+            <div class="col-12 col-md-4">
+              <a href="/user/maintenance" class="btn btn-dark w-100">
+                Request Maintenance
+              </a>
+            </div>
+            <div class="col-12 col-md-4">
+              <a href="/user/emergency" class="btn btn-dark w-100">
+                Request Emergency
+              </a>
+            </div>
+          </div>
+        </div>
+       
+        
       </div>
     </div>
   </div>
+
+   <!-- Basic User Booking Limit Alert -->
+   <% if (!isPremium) { %>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="alert alert-info border-0 shadow-sm">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle text-info me-3 fa-2x"></i>
+            <div>
+              <h5 class="mb-1">Basic User Booking Limit</h5>
+              <p class="mb-0">You have <%= activeBookingsCount %>/2 active bookings. <a href="/user/premium" class="fw-bold">Upgrade to Premium</a> for unlimited bookings and priority service!</p>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
 
   <div class="row mb-4">
     <div class="col-md-3">
