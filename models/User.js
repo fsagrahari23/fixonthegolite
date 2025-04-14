@@ -75,6 +75,10 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  isApproved:{
+    type: Boolean,
+    default: true,
+  },
   premiumFeatures: {
     priorityService: { type: Boolean, default: false },
     tracking: { type: Boolean, default: false },

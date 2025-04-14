@@ -287,7 +287,7 @@ router.get("/mechanics", async (req, res) => {
     const pendingMechanics = await MechanicProfile.find({ user: { $in: pendingUsers.map(u => u._id) } }).populate("user", "name email phone");
     const approvedMechanics = await MechanicProfile.find({ user: { $in: approvedUsers.map(u => u._id) } }).populate("user", "name email phone");
 
-    console.log("Pending Mechanics:", pendingMechanics);
+    console.log("Pending Mechanics:", pendingUsers);
     console.log("Approved Mechanics:", approvedMechanics);
 
     res.render("admin/mechanics", {
