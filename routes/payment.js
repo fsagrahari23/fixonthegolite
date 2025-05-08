@@ -65,64 +65,68 @@ router.get("/:bookingId", async (req, res) => {
 })
 
 // Process payment
-// router.post("/:bookingId/process", async (req, res) => {
-//   try {
-//     const { paymentMethodId } = req.body
+router.post("/:bookingId/process", async (req, res) => {
+  try {
+    const { paymentMethodId } = req.body
 
-//     const booking = await Booking.findById(req.params.bookingId)
+    const booking = await Booking.findById(req.params.bookingId)
 
-//     if (!booking) {
-//       return res.status(404).json({ success: false, message: "Booking not found" })
-//     }
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" })
+    }
 
-//     // Check if user is authorized
-//     if (booking.user.toString() !== req.user._id.toString()) {
-//       return res.status(403).json({ success: false, message: "Not authorized" })
-//     }
+    // Check if user is authorized
+    if (booking.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Not authorized" })
+    }
 
-//     // Apply discount if user has premium subscription
-//     let amountToCharge = booking.payment.amount
+    // Apply discount if user has premium subscription
+    let amountToCharge = booking.payment.amount
     
-//     const subscription = await Subscription.findOne({
-//       user: req.user._id,
-//       status: "active",
-//       expiresAt: { $gt: new Date() },
-//     })
+    const subscription = await Subscription.findOne({
+      user: req.user._id,
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    })
 
-//     if (subscription) {
-//       const discountPercentage = subscription.plan === "yearly" ? 15 : 10
-//       amountToCharge = amountToCharge * (1 - discountPercentage / 100)
-//       // Round to 2 decimal places and ensure it's not less than $1
-//       amountToCharge = Math.max(Math.round(amountToCharge * 100) / 100, 1)
-//     }
+    if (subscription) {
+      const discountPercentage = subscription.plan === "yearly" ? 15 : 10
+      amountToCharge = amountToCharge * (1 - discountPercentage / 100)
+      // Round to 2 decimal places and ensure it's not less than $1
+      amountToCharge = Math.max(Math.round(amountToCharge * 100) / 100, 1)
+    }
 
-//     // Create payment intent
-//     const paymentIntent = await stripe.paymentIntents.create({
-//       amount: Math.round(amountToCharge * 100), // Convert to cents
-//       currency: "usd",
-//       payment_method: paymentMethodId,
-//       confirm: true,
-//       description: `Payment for booking #${booking._id}`,
-//     })
-
-//     // Update booking payment status
-//     booking.payment.status = "completed"
-//     booking.payment.transactionId = paymentIntent.id
+    // Create payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amountToCharge * 100), // Convert to cents
+      currency: "usd",
+      payment_method: paymentMethodId,
+      confirm: true,
+      description: `Payment for booking #${booking._id}`,
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: "never",
+      },
+     
+    })
+    // Update booking payment status
+    booking.payment.status = "completed"
+    booking.payment.transactionId = paymentIntent.id
     
-//     // Record the discount if applied
-//     if (subscription) {
-//       booking.payment.discountApplied = booking.payment.amount - amountToCharge
-//       booking.payment.discountPercentage = subscription.plan === "yearly" ? 15 : 10
-//     }
+    // Record the discount if applied
+    if (subscription) {
+      booking.payment.discountApplied = booking.payment.amount - amountToCharge
+      booking.payment.discountPercentage = subscription.plan === "yearly" ? 15 : 10
+    }
     
-//     await booking.save()
+    await booking.save()
 
-//     return res.status(200).json({ success: true, message: "Payment successful" })
-//   } catch (error) {
-//     console.error("Payment process error:", error)
-//     return res.status(500).json({ success: false, message: error.message })
-//   }
-// })
+    return res.status(200).json({ success: true, message: "Payment successful" })
+  } catch (error) {
+    console.error("Payment process error:", error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+})
 
 // Subscription payment processing
 router.post("/premium/process", async (req, res) => {

@@ -264,11 +264,13 @@ router.get("/history", async (req, res) => {
     const bookings = await Booking.find({ mechanic: req.user._id })
       .populate("user", "name")
       .sort({ createdAt: -1 });
+    const profile = await MechanicProfile.findOne({ user: req.user._id });
 
     res.render("mechanic/history", {
       title: "Booking History",
       bookings,
       user: req.user,
+      profile
     });
   } catch (error) {
     console.error("Booking history error:", error);

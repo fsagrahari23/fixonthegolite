@@ -383,11 +383,60 @@ router.post("/mechanic/:id/reject", async (req, res) => {
 // Manage bookings
 router.get("/bookings", async (req, res) => {
   try {
-    const bookings = await Booking.find().populate("user", "name").populate("mechanic", "name").sort({ createdAt: -1 })
+    // Parallel fetching for performance
+    const [bookings, bookingStatsCounts, bookingByCategory, bookingTrends] = await Promise.all([
+      Booking.find()
+        .populate("user", "name")
+        .populate("mechanic", "name")
+        .sort({ createdAt: -1 }),
+
+      Promise.all([
+        Booking.countDocuments(),
+        Booking.countDocuments({ status: "pending" }),
+        Booking.countDocuments({ status: "completed" }),
+        Booking.countDocuments({ status: "cancelled" }),
+      ]),
+
+      Booking.aggregate([
+        {
+          $group: {
+            _id: { $ifNull: ["$problemCategory", "Uncategorized"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } } // optional: most common first
+      ]),
+
+      Booking.aggregate([
+        {
+          $match: {
+            createdAt: {
+              $gte: new Date(new Date().setDate(new Date().getDate() - 6)) // last 7 days
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+            },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } } // ascending by date
+      ])
+    ])
+
+    const [total, active, completed, cancelled] = bookingStatsCounts
+
+    const bookingStats = { total, active, completed, cancelled }
 
     res.render("admin/bookings", {
       title: "Manage Bookings",
       bookings,
+      bookingStats,
+      bookingByCategory,
+      bookingTrends
     })
   } catch (error) {
     console.error("Manage bookings error:", error)
@@ -395,6 +444,7 @@ router.get("/bookings", async (req, res) => {
     res.redirect("/admin/dashboard")
   }
 })
+
 
 // View booking details
 router.get("/booking/:id", async (req, res) => {

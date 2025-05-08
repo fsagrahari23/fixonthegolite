@@ -52,21 +52,38 @@ router.get("/redirect", isAuthenticated, (req, res) => {
 // Register user handle
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, confirmPassword, phone, address, latitude, longitude } = req.body
+    const { name, email, password, confirmPassword, phone, address, latitude, longitude } = req.body;
+
+    const errors = [];
+
+    // Regular expressions
+    const nameRegex = /^[A-Za-z][A-Za-z\s]*$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[0-9]{10}$/;
 
     // Validation
-    const errors = []
-
     if (!name || !email || !password || !confirmPassword || !phone || !address) {
-      errors.push({ msg: "Please fill in all fields" })
-    }
+      errors.push({ msg: "Please fill in all fields" });
+    } else {
+      if (!nameRegex.test(name)) {
+        errors.push({ msg: "Name must start with letters and contain only letters and spaces." });
+      }
 
-    if (password !== confirmPassword) {
-      errors.push({ msg: "Passwords do not match" })
-    }
+      if (!emailRegex.test(email)) {
+        errors.push({ msg: "Enter a valid email address." });
+      }
 
-    if (password.length < 6) {
-      errors.push({ msg: "Password should be at least 6 characters" })
+      if (password.length < 6) {
+        errors.push({ msg: "Password should be at least 6 characters." });
+      }
+
+      if (password !== confirmPassword) {
+        errors.push({ msg: "Passwords do not match." });
+      }
+
+      if (!phoneRegex.test(phone)) {
+        errors.push({ msg: "Enter a valid 10-digit phone number." });
+      }
     }
 
     if (errors.length > 0) {
@@ -77,14 +94,13 @@ router.post("/register", async (req, res) => {
         email,
         phone,
         address,
-      })
+      });
     }
 
     // Check if user exists
-    const existingUser = await User.findOne({ email })
-
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
-      errors.push({ msg: "Email is already registered" })
+      errors.push({ msg: "Email is already registered." });
       return res.render("auth/register", {
         title: "Register as User",
         errors,
@@ -92,7 +108,7 @@ router.post("/register", async (req, res) => {
         email,
         phone,
         address,
-      })
+      });
     }
 
     // Create new user
@@ -107,18 +123,19 @@ router.post("/register", async (req, res) => {
         type: "Point",
         coordinates: [Number.parseFloat(longitude) || 0, Number.parseFloat(latitude) || 0],
       },
-    })
+    });
 
-    await newUser.save()
+    await newUser.save();
 
-    req.flash("success_msg", "You are now registered and can log in")
-    res.redirect("/auth/login")
+    req.flash("success_msg", "You are now registered and can log in");
+    res.redirect("/auth/login");
+
   } catch (error) {
-    console.error("Registration error:", error)
-    req.flash("error_msg", "An error occurred during registration")
-    res.redirect("/auth/register")
+    console.error("Registration error:", error);
+    req.flash("error_msg", "An error occurred during registration");
+    res.redirect("/auth/register");
   }
-})
+});
 
 // Register mechanic handle
 router.post("/register-mechanic", async (req, res) => {
@@ -135,11 +152,16 @@ router.post("/register-mechanic", async (req, res) => {
       specialization,
       experience,
       hourlyRate,
-    } = req.body
+    } = req.body;
 
-    // Validation
-    const errors = []
+    const errors = [];
 
+    // Regex patterns
+    const nameRegex = /^[A-Za-z][A-Za-z\s]*$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[0-9]{10}$/;
+
+    // Required field check
     if (
       !name ||
       !email ||
@@ -151,21 +173,43 @@ router.post("/register-mechanic", async (req, res) => {
       !experience ||
       !hourlyRate
     ) {
-      errors.push({ msg: "Please fill in all fields" })
+      errors.push({ msg: "Please fill in all fields" });
+    } else {
+      if (!nameRegex.test(name)) {
+        errors.push({ msg: "Name must start with letters and contain only letters and spaces." });
+      }
+
+      if (!emailRegex.test(email)) {
+        errors.push({ msg: "Enter a valid email address." });
+      }
+
+      if (password.length < 6) {
+        errors.push({ msg: "Password should be at least 6 characters." });
+      }
+
+      if (password !== confirmPassword) {
+        errors.push({ msg: "Passwords do not match." });
+      }
+
+      if (!phoneRegex.test(phone)) {
+        errors.push({ msg: "Enter a valid 10-digit phone number." });
+      }
+
+      if (isNaN(Number(experience)) || Number(experience) < 0) {
+        errors.push({ msg: "Experience must be a valid non-negative number." });
+      }
+
+      if (isNaN(Number(hourlyRate)) || Number(hourlyRate) <= 0) {
+        errors.push({ msg: "Hourly rate must be a valid number greater than 0." });
+      }
     }
 
-    if (password !== confirmPassword) {
-      errors.push({ msg: "Passwords do not match" })
-    }
-
-    if (password.length < 6) {
-      errors.push({ msg: "Password should be at least 6 characters" })
-    }
-
+    // Document check
     if (!req.files || !req.files.documents) {
-      errors.push({ msg: "Please upload your certification documents" })
+      errors.push({ msg: "Please upload your certification documents." });
     }
 
+    // If there are errors, re-render form
     if (errors.length > 0) {
       return res.render("auth/register-mechanic", {
         title: "Register as Mechanic",
@@ -177,14 +221,13 @@ router.post("/register-mechanic", async (req, res) => {
         specialization,
         experience,
         hourlyRate,
-      })
+      });
     }
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email })
-
+    // Check for existing user
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
-      errors.push({ msg: "Email is already registered" })
+      errors.push({ msg: "Email is already registered." });
       return res.render("auth/register-mechanic", {
         title: "Register as Mechanic",
         errors,
@@ -195,24 +238,22 @@ router.post("/register-mechanic", async (req, res) => {
         specialization,
         experience,
         hourlyRate,
-      })
+      });
     }
 
-    // Upload documents to cloudinary
-    const documents = []
-    if (req.files.documents.length) {
-      // Multiple files
+    // Upload documents
+    const documents = [];
+    if (Array.isArray(req.files.documents)) {
       for (const file of req.files.documents) {
-        const result = await cloudinary.uploader.upload(file.tempFilePath)
-        documents.push(result.secure_url)
+        const result = await cloudinary.uploader.upload(file.tempFilePath);
+        documents.push(result.secure_url);
       }
     } else {
-      // Single file
-      const result = await cloudinary.uploader.upload(req.files.documents.tempFilePath)
-      documents.push(result.secure_url)
+      const result = await cloudinary.uploader.upload(req.files.documents.tempFilePath);
+      documents.push(result.secure_url);
     }
 
-    // Create new user
+    // Create user
     const newUser = new User({
       name,
       email,
@@ -225,9 +266,9 @@ router.post("/register-mechanic", async (req, res) => {
         type: "Point",
         coordinates: [Number.parseFloat(longitude) || 0, Number.parseFloat(latitude) || 0],
       },
-    })
+    });
 
-    const savedUser = await newUser.save()
+    const savedUser = await newUser.save();
 
     // Create mechanic profile
     const mechanicProfile = new MechanicProfile({
@@ -236,18 +277,20 @@ router.post("/register-mechanic", async (req, res) => {
       experience: Number.parseInt(experience),
       hourlyRate: Number.parseFloat(hourlyRate),
       documents,
-    })
+    });
 
-    await mechanicProfile.save()
+    await mechanicProfile.save();
 
-    req.flash("success_msg", "Registration successful. Please wait for admin approval.")
-    res.redirect("/auth/pending-approval")
+    req.flash("success_msg", "Registration successful. Please wait for admin approval.");
+    res.redirect("/auth/pending-approval");
+
   } catch (error) {
-    console.error("Mechanic registration error:", error)
-    req.flash("error_msg", "An error occurred during registration")
-    res.redirect("/auth/register-mechanic")
+    console.error("Mechanic registration error:", error);
+    req.flash("error_msg", "An error occurred during registration");
+    res.redirect("/auth/register-mechanic");
   }
-})
+});
+
 
 // Logout
 router.get("/logout", (req, res, next) => {

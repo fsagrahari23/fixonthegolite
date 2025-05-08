@@ -884,4 +884,83 @@ router.post("/maintenance", async (req, res) => {
   }
 })
 
+// Update profile
+router.post("/profile", async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      address,
+      latitude,
+      longitude,
+    } = req.body;
+
+    // Validation
+    if (
+      !name ||
+      !phone ||
+      !address
+    ) {
+      req.flash("error_msg", "Please fill in all fields");
+      return res.redirect("/user/profile");
+    }
+
+    // Update user
+    await User.findByIdAndUpdate(req.user._id, {
+      name,
+      phone,
+      address,
+      location: {
+        type: "Point",
+        coordinates: [
+          Number.parseFloat(longitude) || 0,
+          Number.parseFloat(latitude) || 0,
+        ],
+      },
+    });
+
+  
+
+    req.flash("success_msg", "Profile updated successfully");
+    res.redirect("/user/profile");
+  } catch (error) {
+    console.error("Update profile error:", error);
+    req.flash("error_msg", "Failed to update profile");
+    res.redirect("/mechanic/profile");
+  }
+});
+
+
+router.post("/change-password", async(req,res)=>{
+    // console.log(req.user)
+    try{
+      const {newPassword,currentPassword,confirmPassword} = req.body;
+      if(!newPassword||!currentPassword ||!confirmPassword){
+        req.flash("error_msg", "Please fill in all fields");
+        return res.redirect("/user/profile");
+      }
+      const hashPassword= await bcrypt.hash(newPassword,10);
+      const user = await User.findById(req.user._id);
+      const isMatch = await user.comparePassword(currentPassword);
+      if(!isMatch){
+        req.flash("error_msg", "Please enter correct password");
+        return res.redirect("/user/profile");
+      }
+  
+      await User.findByIdAndUpdate(req.user._id, {
+       password:hashPassword
+      })
+      await user.save();
+      req.flash("success_msg", "Profile updated successfully");
+      res.redirect("/user/profile");
+    }catch (error) {
+      console.error("Update profile error:", error);
+      req.flash("error_msg", "Failed to update password");
+      res.redirect("/user/profile");
+    }
+    
+})
+
+
+
 module.exports = router
