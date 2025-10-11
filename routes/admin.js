@@ -4,6 +4,7 @@ const User = require("../models/User")
 const MechanicProfile = require("../models/MechanicProfile")
 const Booking = require("../models/Booking")
 const Subscription = require("../models/Subscription")
+const Chat = require("../models/Chat")
 const { isAdmin } = require("../middleware/auth")
 
 // Admin dashboard
@@ -274,6 +275,59 @@ router.get("/user/:id", async (req, res) => {
     console.error("User details error:", error)
     req.flash("error_msg", "Failed to load user details")
     res.redirect("/admin/users")
+  }
+})
+
+// Delete a user and related data
+router.post("/user/:id/delete", async (req, res) => {
+  try {
+    const userId = req.params.id
+    const user = await User.findById(userId)
+
+    if (!user) {
+      req.flash("error_msg", "User not found")
+      return res.redirect("/admin/users")
+    }
+
+    // Prevent accidental deletion of admin accounts
+    if (user.role === "admin") {
+      req.flash("error_msg", "Cannot delete an admin account")
+      return res.redirect(`/admin/user/${userId}`)
+    }
+
+    // Collect bookings where this user is either the customer or mechanic
+    const bookings = await Booking.find({
+      $or: [{ user: userId }, { mechanic: userId }],
+    }).select("_id")
+
+    const bookingIds = bookings.map((b) => b._id)
+
+    if (bookingIds.length > 0) {
+      // Delete chats associated with these bookings
+      await Chat.deleteMany({ booking: { $in: bookingIds } })
+
+      // Delete the bookings themselves
+      await Booking.deleteMany({ _id: { $in: bookingIds } })
+    }
+
+    // Delete subscriptions for this user
+    await Subscription.deleteMany({ user: userId })
+
+    // If mechanic, remove mechanic profile as well
+    if (user.role === "mechanic") {
+      await MechanicProfile.findOneAndDelete({ user: userId })
+    }
+
+    // Finally, delete the user
+    await User.findByIdAndDelete(userId)
+
+    req.flash("success_msg", "User and related data deleted successfully")
+    // Redirect based on role we deleted
+    return res.redirect(user.role === "mechanic" ? "/admin/mechanics" : "/admin/users")
+  } catch (error) {
+    console.error("Delete user error:", error)
+    req.flash("error_msg", "Failed to delete user")
+    return res.redirect("/admin/users")
   }
 })
 
