@@ -249,6 +249,34 @@ router.post("/booking/:id/complete", async (req, res) => {
     booking.updatedAt = new Date();
     await booking.save();
 
+    // Emit socket event to notify user and mechanic (if online)
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const notifyUsers = [booking.user.toString()];
+        if (booking.mechanic) notifyUsers.push(booking.mechanic.toString());
+
+        notifyUsers.forEach((userId) => {
+          try {
+            io.to(userId).emit('booking-status-changed', {
+              bookingId: booking._id.toString(),
+              status: booking.status,
+              updatedAt: booking.updatedAt,
+            });
+          } catch (e) {
+            // fallback to global emit
+            io.emit('booking-status-changed', {
+              bookingId: booking._id.toString(),
+              status: booking.status,
+              updatedAt: booking.updatedAt,
+            });
+          }
+        });
+      }
+    } catch (emitErr) {
+      console.error('Error emitting booking status change:', emitErr);
+    }
+
     req.flash("success_msg", "Service completed successfully");
     res.redirect(`/mechanic/booking/${booking._id}`);
   } catch (error) {

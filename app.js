@@ -32,6 +32,8 @@ const {
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
+// Make io available to routes via app.get('io')
+app.set('io', io);
 
 // Connect to MongoDB
 mongoose

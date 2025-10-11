@@ -69,18 +69,28 @@
           iconColor: '#fa755a'
         }
       }
+    , hidePostalCode: true
     });
 
     card.mount('#card-element');
 
+    let cardComplete = false;
     card.addEventListener('change', function(event) {
       const displayError = document.getElementById('card-errors');
       displayError.textContent = event.error ? event.error.message : '';
+      // Track completeness and enable submit only when card input is complete
+      cardComplete = !!event.complete;
+      const submitBtn = document.getElementById('submit-button');
+      if (submitBtn) submitBtn.disabled = !cardComplete;
     });
 
     const form = document.getElementById('payment-form');
     const bookingId = form.dataset.bookingId;
-    const amount = <%= booking.payment.amount.toFixed(2) %>;
+  const amount = Number('<%= booking.payment.amount.toFixed(2) %>');
+
+    // Start with submit disabled until card is complete
+    const initialSubmit = document.getElementById('submit-button');
+    if (initialSubmit) initialSubmit.disabled = true;
 
     form.addEventListener('submit', async function(event) {
       event.preventDefault();
@@ -90,6 +100,14 @@
       submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
 
       try {
+        // Prevent attempting to create a PaymentMethod if the card input is not complete
+        if (!cardComplete) {
+          document.getElementById('card-errors').textContent = 'Please complete the card details before submitting.';
+          submitButton.disabled = false;
+          submitButton.innerHTML = `<i class="fas fa-credit-card me-2"></i> Pay $${amount.toFixed(2)}`;
+          return;
+        }
+
         const { paymentMethod, error } = await stripe.createPaymentMethod({
           type: 'card',
           card: card
@@ -98,15 +116,31 @@
         if (error) {
           document.getElementById('card-errors').textContent = error.message;
           submitButton.disabled = false;
-          submitButton.innerHTML = `<i class="fas fa-credit-card me-2"></i> Pay $${amount}`;
+          submitButton.innerHTML = `<i class="fas fa-credit-card me-2"></i> Pay $${amount.toFixed(2)}`;
           return;
         }
 
         const response = await fetch(`/payment/${bookingId}/process`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'same-origin',
           body: JSON.stringify({ paymentMethodId: paymentMethod.id })
         });
+
+        if (!response.ok) {
+          // try to extract json message, otherwise text
+          let msg = 'Network response was not ok';
+          try {
+            const errBody = await response.json();
+            msg = errBody.message || JSON.stringify(errBody);
+          } catch (e) {
+            msg = await response.text();
+          }
+          throw new Error(msg || 'Payment failed');
+        }
 
         const result = await response.json();
 
@@ -117,7 +151,7 @@
                 <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
               </div>
               <h3 class="mb-3">Payment Successful!</h3>
-              <p class="mb-4">Your payment of $${amount} has been processed successfully.</p>
+              <p class="mb-4">Your payment of $${amount.toFixed(2)} has been processed successfully.</p>
               <div class="d-grid gap-2">
                 <a href="/user/booking/${bookingId}" class="btn btn-primary">
                   <i class="fas fa-arrow-left me-2"></i> Back to Booking
@@ -136,7 +170,7 @@
         document.getElementById('card-errors').textContent =
           err.message || 'An error occurred during payment. Please try again.';
         submitButton.disabled = false;
-        submitButton.innerHTML = `<i class="fas fa-credit-card me-2"></i> Pay $${amount}`;
+        submitButton.innerHTML = `<i class="fas fa-credit-card me-2"></i> Pay $${amount.toFixed(2)}`;
       }
     });
   });

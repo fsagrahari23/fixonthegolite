@@ -4,10 +4,88 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY)
 const Booking = require("../models/Booking")
 const Subscription = require("../models/Subscription")
 const User = require("../models/User")
+const mongoose = require('mongoose')
+
+// Subscription payment processing (placed before generic booking routes to avoid
+// route conflicts where 'premium' could be treated as a bookingId)
+router.post('/premium/process', async (req, res) => {
+  try {
+    const { plan, paymentMethodId } = req.body
+    if (!['monthly', 'yearly'].includes(plan)) {
+      return res.status(400).json({ success: false, message: 'Invalid plan selected' })
+    }
+
+    const amount = plan === 'monthly' ? 999 : 9999 // in cents
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      payment_method: paymentMethodId,
+      confirm: true,
+      description: `Premium ${plan} subscription for ${req.user.email}`,
+      receipt_email: req.user.email,
+      automatic_payment_methods: { enabled: true, allow_redirects: 'never' }
+    })
+
+    const expiresAt = new Date()
+    if (plan === 'monthly') expiresAt.setMonth(expiresAt.getMonth() + 1)
+    else expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+
+    const subscription = new Subscription({
+      user: req.user._id,
+      plan,
+      amount: amount / 100,
+      status: 'active',
+      paymentIntentId: paymentIntent.id,
+      paymentMethod: 'stripe',
+      startDate: new Date(),
+      expiresAt,
+      features: {
+        priorityService: true,
+        tracking: true,
+        discountPercentage: plan === 'yearly' ? 15 : 10,
+        emergencyAssistance: plan === 'yearly',
+        freeTowing: plan === 'yearly' ? 2 : 0,
+        maintenanceChecks: plan === 'yearly'
+      }
+    })
+
+    await subscription.save()
+
+    await User.findByIdAndUpdate(req.user._id, {
+      isPremium: true,
+      premiumTier: plan,
+      premiumFeatures: {
+        priorityService: true,
+        tracking: true,
+        discounts: plan === 'yearly' ? 15 : 10,
+        emergencyAssistance: plan === 'yearly',
+        freeTowing: plan === 'yearly' ? 2 : 0,
+        maintenanceChecks: plan === 'yearly'
+      }
+    })
+
+    return res.status(200).json({ success: true, message: 'Subscription payment successful', redirectUrl: '/user/premium/success' })
+  } catch (error) {
+    console.error('Subscription payment error:', error)
+    return res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// Subscription success page
+router.get('/premium/success', (req, res) => {
+  res.render('payment/subscription-success', { title: 'Subscription Successful', user: req.user })
+})
 
 // Process payment page
 router.get("/:bookingId", async (req, res) => {
   try {
+    // Validate bookingId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.bookingId)) {
+      req.flash('error_msg', 'Invalid booking identifier')
+      return res.redirect('/')
+    }
+
     const booking = await Booking.findById(req.params.bookingId).populate("mechanic", "name").populate("user", "name")
 
     if (!booking) {
@@ -68,6 +146,10 @@ router.get("/:bookingId", async (req, res) => {
 router.post("/:bookingId/process", async (req, res) => {
   try {
     const { paymentMethodId } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(req.params.bookingId)) {
+      return res.status(400).json({ success: false, message: 'Invalid booking identifier' })
+    }
 
     const booking = await Booking.findById(req.params.bookingId)
 

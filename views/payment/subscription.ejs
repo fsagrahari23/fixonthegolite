@@ -33,7 +33,7 @@
             
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="text-muted">Plan Price</span>
-              <span class="fw-bold">$<%= amount.toFixed(2) %></span>
+              <span class="fw-bold"><%= amount.toFixed(2) %></span>
             </div>
             
             <div class="d-flex justify-content-between align-items-center">
@@ -45,7 +45,7 @@
             
             <div class="d-flex justify-content-between align-items-center">
               <span class="fw-bold">Total Due Today</span>
-              <span class="fw-bold text-primary fs-5">$<%= amount.toFixed(2) %></span>
+              <span class="fw-bold text-primary fs-5"><%= amount.toFixed(2) %></span>
             </div>
           </div>
           
@@ -68,7 +68,7 @@
             
             <div class="d-grid gap-2">
               <button type="submit" id="submit-button" class="btn btn-primary btn-lg">
-                <i class="fas fa-lock me-2"></i> Pay $<%= amount.toFixed(2) %>
+                <i class="fas fa-lock me-2"></i> Pay <%= amount.toFixed(2) %>
               </button>
               <a href="/user/premium" class="btn btn-outline-secondary">Cancel</a>
             </div>
@@ -153,8 +153,21 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const stripe = Stripe('<%= stripePublishableKey %>');
-    console.log(stripe);
+    // Ensure Stripe.js loaded
+    if (typeof Stripe === 'undefined') {
+      const err = document.getElementById('card-errors');
+      if (err) err.textContent = 'Payment provider failed to load. Please try again later.';
+      return;
+    }
+
+    const publishableKey = '<%= typeof stripePublishableKey !== "undefined" ? stripePublishableKey : "" %>';
+    if (!publishableKey) {
+      const err = document.getElementById('card-errors');
+      if (err) err.textContent = 'Stripe publishable key not configured. Contact the administrator.';
+      return;
+    }
+
+    const stripe = Stripe(publishableKey);
     const elements = stripe.elements();
     
     // Create card element
@@ -174,11 +187,25 @@
           iconColor: '#fa755a'
         }
       }
+    , hidePostalCode: true
     });
     
     // Mount the card element
-    cardElement.mount('#card-element');
+    try {
+      cardElement.mount('#card-element');
+    } catch (mountErr) {
+      const err = document.getElementById('card-errors');
+      if (err) err.textContent = 'Unable to initialize card input. Please try again.';
+      console.error('Stripe mount error:', mountErr);
+      return;
+    }
     
+    // Track completion state and ensure submit button exists before handlers
+    let cardComplete = false;
+    const form = document.getElementById('payment-form');
+    const submitButton = document.getElementById('submit-button');
+    if (submitButton) submitButton.disabled = true;
+
     // Handle validation errors
     cardElement.on('change', function(event) {
       const displayError = document.getElementById('card-errors');
@@ -187,12 +214,12 @@
       } else {
         displayError.textContent = '';
       }
+      // Track completeness and enable submit only when card input is complete
+      cardComplete = !!event.complete;
+      if (submitButton) submitButton.disabled = !cardComplete;
     });
-    
+
     // Handle form submission
-    const form = document.getElementById('payment-form');
-    const submitButton = document.getElementById('submit-button');
-    
     form.addEventListener('submit', async function(event) {
       event.preventDefault();
       
@@ -201,6 +228,15 @@
       submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
       
       try {
+        // Prevent attempting to create a PaymentMethod if the card input is not complete
+        if (!cardComplete) {
+          const displayError = document.getElementById('card-errors');
+          if (displayError) displayError.textContent = 'Please complete the card details before submitting.';
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Pay <%= amount.toFixed(2) %>';
+          return;
+        }
+
         const { paymentMethod, error } = await stripe.createPaymentMethod({
           type: 'card',
           card: cardElement,
@@ -215,29 +251,66 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
+          credentials: 'same-origin',
           body: JSON.stringify({
             paymentMethodId: paymentMethod.id,
             plan: form.dataset.plan
           }),
         });
-        console.log(response)
+
+        if (!response.ok) {
+          let msg = 'Payment failed';
+          try {
+            const err = await response.json();
+            msg = err.message || JSON.stringify(err);
+          } catch (e) {
+            msg = await response.text();
+          }
+          throw new Error(msg || 'Payment failed');
+        }
+
         const result = await response.json();
         
         if (result.success) {
-          window.location.href = result.redirectUrl;
+          // Show success modal instead of redirect
+          const successModal = new bootstrap.Modal(document.getElementById('subscriptionSuccessModal'));
+          // Use server-provided amount for display
+          document.getElementById('success-amount').textContent = '<%= amount.toFixed(2) %>';
+          successModal.show();
         } else {
-          throw new Error(result.message);
+          throw new Error(result.message || 'Payment failed');
         }
       } catch (error) {
         const errorElement = document.getElementById('card-errors');
         errorElement.textContent = error.message;
-        
+
         submitButton.disabled = false;
-        submitButton.innerHTML = 'Pay $<%= amount.toFixed(2) %>';
+        submitButton.innerHTML = 'Pay <%= amount.toFixed(2) %>';
       }
     });
   });
 </script>
+
+<!-- Subscription Success Modal -->
+<div class="modal fade" id="subscriptionSuccessModal" tabindex="-1" aria-labelledby="subscriptionSuccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="subscriptionSuccessModalLabel">Subscription Successful!</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+        <h4 class="mb-3">Thank you for subscribing!</h4>
+        <p class="mb-2">Your payment of <span id="success-amount"></span> has been processed successfully.</p>
+        <p class="mb-4">Enjoy your premium benefits.</p>
+        <a href="/user/dashboard" class="btn btn-primary">Go to Dashboard</a>
+        <a href="/user/profile" class="btn btn-outline-secondary ms-2">View Profile</a>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
