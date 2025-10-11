@@ -69,6 +69,17 @@ body {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 30% 100%);
 }
 
+/* Allow clicks to pass through the decorative overlay and keep buttons above it */
+.hero-section::before {
+  pointer-events: none;
+}
+
+.hero-section .btn,
+.cta-section .btn {
+  position: relative;
+  z-index: 2;
+}
+
 .hero-image {
   animation: float 3s ease-in-out infinite;
   filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.3));
