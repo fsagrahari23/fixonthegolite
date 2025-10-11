@@ -481,6 +481,20 @@ router.get("/payments", async (req, res) => {
       .populate("mechanic", "name")
       .sort({ updatedAt: -1 });
 
+    // Payment status counts (bookings with amount > 0 and status completed)
+    const [completedPaymentsCount, pendingPaymentsCount] = await Promise.all([
+      Booking.countDocuments({
+        status: "completed",
+        "payment.status": "completed",
+        "payment.amount": { $gt: 0 },
+      }),
+      Booking.countDocuments({
+        status: "completed",
+        "payment.status": "pending",
+        "payment.amount": { $gt: 0 },
+      }),
+    ]);
+
     // Get active subscriptions with payment info
     const subscriptions = await Subscription.find({
       status: "active",
@@ -505,7 +519,7 @@ router.get("/payments", async (req, res) => {
 
     const subscriptionTotal = subscriptionRevenue.length > 0 ? subscriptionRevenue[0].total : 0;
 
-    const totalAmount = bookingTotal + subscriptionTotal;
+    const totalAmount = (bookingTotal + subscriptionTotal).toFixed(2);
 
     res.render("admin/payments", {
       title: "Manage Payments",
@@ -514,6 +528,8 @@ router.get("/payments", async (req, res) => {
       totalAmount,
       bookingTotal,
       subscriptionTotal,
+  completedPaymentsCount,
+  pendingPaymentsCount,
     });
   } catch (error) {
     console.error("Manage payments error:", error);

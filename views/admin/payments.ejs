@@ -97,8 +97,8 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0">$<%= totalAmount %></h3>
-              <p class="mb-0">Total Revenue</p>
+              <p class="mb-0 text-white">Total Revenue</p>
+              <h3 class="mb-0 ">$<%= totalAmount %></h3>
             </div>
             <div class="stats-icon">
               <i class="fas fa-dollar-sign"></i>
@@ -114,8 +114,9 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0"><%=  %></h3>
+
               <p class="mb-0 text-white">Completed Payments</p>
+              <h3 class="mb-0"><%= completedPaymentsCount %></h3>
             </div>
             <div class="stats-icon">
               <i class="fas fa-check-circle"></i>
@@ -131,8 +132,8 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0"><%=  %></h3>
               <p class="mb-0">Pending Payments</p>
+              <h3 class="mb-0"><%= pendingPaymentsCount %></h3>
             </div>
             <div class="stats-icon">
               <i class="fas fa-clock"></i>
@@ -178,7 +179,11 @@
                 </thead>
                 <tbody>
                   <% payments.forEach(payment => { %>
-                  <tr data-status="<%= payment.payment.status %>">
+                  <tr 
+                    data-status="<%= payment.payment.status %>"
+                    data-amount="<%= payment.payment.amount %>"
+                    data-date="<%= payment.updatedAt && payment.updatedAt.toISOString ? payment.updatedAt.toISOString() : new Date(payment.updatedAt).toISOString() %>"
+                  >
                     <td><small class="text-muted"><%= payment._id.toString().substring(0, 8) %>...</small></td>
                     <td>
                       <div class="d-flex flex-column">
@@ -197,9 +202,9 @@
                     <td>
                       <div class="d-flex align-items-center">
                         <div class="avatar-circle bg-success text-white me-2">
-                          <%= payment.user.name.charAt(0).toUpperCase() %>
+                          <%= payment.mechanic && payment.mechanic.name ? payment.mechanic.name.charAt(0).toUpperCase() : 'N' %>
                         </div>
-                        <span><%= payment.user.name %></span>
+                        <span><%= payment.mechanic && payment.mechanic.name ? payment.mechanic.name : 'N/A' %></span>
                       </div>
                     </td>
                     <td><span class="fw-bold text-success">$<%= payment.payment.amount.toFixed(2) %></span></td>
