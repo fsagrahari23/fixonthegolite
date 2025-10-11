@@ -458,13 +458,102 @@ router.get("/booking/:id", async (req, res) => {
       return res.redirect("/admin/bookings")
     }
 
+    // Build list of available mechanics for assignment (approved, available, skill match)
+    let availableMechanics = []
+    try {
+      // Find approved mechanic users
+      const approvedMechanicUsers = await User.find(
+        { role: "mechanic", isApproved: true },
+        "_id name"
+      )
+
+      const approvedIds = approvedMechanicUsers.map((u) => u._id)
+
+      // Find matching mechanic profiles by specialization and availability
+      const profiles = await MechanicProfile.find({
+        user: { $in: approvedIds },
+        availability: true,
+        // If a booking has a problemCategory, prefer mechanics with that specialization
+        ...(booking.problemCategory
+          ? { specialization: booking.problemCategory }
+          : {}),
+      })
+        .select("user specialization experience")
+        .populate("user", "name")
+
+      // Shape for the view: _id (user id), name, specialization, experience
+      availableMechanics = profiles.map((p) => ({
+        _id: p.user._id,
+        name: p.user.name,
+        specialization: p.specialization || [],
+        experience: p.experience || 0,
+      }))
+    } catch (e) {
+      console.error("Failed to load available mechanics:", e)
+      availableMechanics = []
+    }
+
     res.render("admin/booking-details", {
       title: "Booking Details",
       booking,
+      availableMechanics,
     })
   } catch (error) {
     console.error("Booking details error:", error)
     req.flash("error_msg", "Failed to load booking details")
+    res.redirect("/admin/bookings")
+  }
+})
+
+// Assign mechanic to a booking
+router.post("/booking/:id/assign-mechanic", async (req, res) => {
+  try {
+    const { mechanicId } = req.body
+    const booking = await Booking.findById(req.params.id)
+    if (!booking) {
+      req.flash("error_msg", "Booking not found")
+      return res.redirect("/admin/bookings")
+    }
+
+    // Validate mechanic user exists and is an approved mechanic
+    const mechanicUser = await User.findOne({ _id: mechanicId, role: "mechanic", isApproved: true })
+    if (!mechanicUser) {
+      req.flash("error_msg", "Invalid mechanic selection")
+      return res.redirect(`/admin/booking/${req.params.id}`)
+    }
+
+    booking.mechanic = mechanicUser._id
+    // When a mechanic is assigned from admin, mark as accepted if still pending
+    if (booking.status === "pending") {
+      booking.status = "accepted"
+    }
+    booking.updatedAt = new Date()
+    await booking.save()
+
+    req.flash("success_msg", "Mechanic assigned successfully")
+    res.redirect(`/admin/booking/${req.params.id}`)
+  } catch (error) {
+    console.error("Assign mechanic error:", error)
+    req.flash("error_msg", "Failed to assign mechanic")
+    res.redirect(`/admin/booking/${req.params.id}`)
+  }
+})
+
+// Delete a booking
+router.post("/booking/:id/delete", async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+    if (!booking) {
+      req.flash("error_msg", "Booking not found")
+      return res.redirect("/admin/bookings")
+    }
+
+    await Booking.findByIdAndDelete(req.params.id)
+    req.flash("success_msg", "Booking deleted successfully")
+    res.redirect("/admin/bookings")
+  } catch (error) {
+    console.error("Delete booking error:", error)
+    req.flash("error_msg", "Failed to delete booking")
     res.redirect("/admin/bookings")
   }
 })
