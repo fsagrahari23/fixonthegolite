@@ -86,13 +86,6 @@ router.get("/dashboard", async (req, res) => {
 
     res.render("user/dashboard", {
       title: "User Dashboard",
-      user: req.user,
-      bookings,
-      stats,
-      categories,
-      subscription,
-      isPremium: !!subscription,
-      remainingBookings,
     })
   } catch (error) {
     console.error("User dashboard error:", error)
@@ -103,16 +96,8 @@ router.get("/dashboard", async (req, res) => {
 
 // New booking page
 router.get("/book", checkBookingLimits,async (req, res) => {
-  
-  const subs = await Subscription.findOne({ user: req.user._id })
- 
-  const locals = {
-    isPremium: subs,
-  }
   res.render("user/book", {
     title: "Book a Mechanic",
-    user: req.user,
-    locals
   })
 })
 
@@ -544,11 +529,6 @@ router.get("/history", async (req, res) => {
 
     res.render("user/history", {
       title: "Booking History",
-      bookings,
-      user: req.user,
-      isPremium,
-      subscription,
-      remainingBookings,
     })
   } catch (error) {
     console.error("Booking history error:", error)
@@ -577,9 +557,6 @@ router.get("/premium", async (req, res) => {
 
     res.render("user/premium", {
       title: "Premium Plans",
-      user: req.user,
-      subscription,
-      activeBookingCount,
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
     })
   } catch (error) {
@@ -659,7 +636,6 @@ router.get("/premium/success", async (req, res) => {
   try {
     res.render("payment/subscription-success", {
       title: "Subscription Successful",
-      user: req.user,
     })
   } catch (error) {
     console.error("Subscription success page error:", error)
@@ -698,12 +674,6 @@ router.get("/profile", async (req, res) => {
 
     res.render("user/profile", {
       title: "My Profile",
-      user: req.user,
-      subscription,
-      subscriptionHistory,
-      isPremium,
-      remainingBookings,
-      premiumFeatures:premiumFeatures.premiumFeatures
     })
   } catch (error) {
     console.error("Profile page error:", error)
@@ -730,8 +700,6 @@ router.get("/emergency", async (req, res) => {
 
     res.render("user/emergency", {
       title: "Emergency Assistance",
-      user: req.user,
-      subscription,
     })
   } catch (error) {
     console.error("Emergency page error:", error)
@@ -813,9 +781,6 @@ router.get("/maintenance", async (req, res) => {
 
     res.render("user/maintenance", {
       title: "Schedule Maintenance Check",
-      user: req.user,
-      subscription,
-      recentMaintenance,
     })
   } catch (error) {
     console.error("Maintenance page error:", error)
@@ -962,5 +927,237 @@ router.post("/change-password", async(req,res)=>{
 })
 
 
+
+// API Endpoints for client-side data fetching
+
+// Dashboard API
+router.get("/api/dashboard", async (req, res) => {
+  try {
+    // Get user's bookings
+    const bookings = await Booking.find({ user: req.user._id })
+      .populate("mechanic", "name phone")
+      .sort({ createdAt: -1 })
+
+    // Get stats
+    const stats = {
+      total: bookings.length,
+      pending: bookings.filter((b) => b.status === "pending").length,
+      inProgress: bookings.filter((b) => b.status === "in-progress").length,
+      completed: bookings.filter((b) => b.status === "completed").length,
+      cancelled: bookings.filter((b) => b.status === "cancelled").length,
+    }
+
+    // Get category-wise data
+    const categories = {}
+    bookings.forEach((booking) => {
+      if (!categories[booking.problemCategory]) {
+        categories[booking.problemCategory] = 0
+      }
+      categories[booking.problemCategory]++
+    })
+
+    // Get user's subscription status
+    const subscription = await Subscription.findOne({
+      user: req.user._id,
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    })
+
+    // Get basic user booking count
+    const activeBookingCount = await Booking.countDocuments({
+      user: req.user._id,
+      status: { $ne: "cancelled" }
+    })
+
+    // Calculate remaining bookings for basic users
+    const remainingBookings = subscription ? "Unlimited" : Math.max(0, 2 - activeBookingCount)
+
+    res.json({
+      user: req.user,
+      bookings,
+      stats,
+      categories,
+      subscription,
+      isPremium: !!subscription,
+      remainingBookings,
+    })
+  } catch (error) {
+    console.error("Dashboard API error:", error)
+    res.status(500).json({ error: "Failed to load dashboard data" })
+  }
+})
+
+// Profile API
+router.get("/api/profile", async (req, res) => {
+  try {
+    // Get subscription details
+    const subscription = await Subscription.findOne({
+      user: req.user._id,
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    }).sort({ createdAt: -1 })
+
+    const isPremium = !!subscription
+
+    // Get subscription history
+    const subscriptionHistory = await Subscription.find({
+      user: req.user._id,
+    }).sort({ createdAt: -1 })
+
+    // Get basic user booking count
+    const activeBookingCount = await Booking.countDocuments({
+      user: req.user._id,
+      status: { $ne: "cancelled" }
+    })
+
+    // Calculate remaining bookings for basic users
+    const remainingBookings = isPremium ? "Unlimited" : Math.max(0, 2 - activeBookingCount)
+
+    const premiumFeatures = await User.findById(req.user._id).select("premiumFeatures")
+
+    res.json({
+      user: req.user,
+      subscription,
+      subscriptionHistory,
+      isPremium,
+      remainingBookings,
+      premiumFeatures: premiumFeatures.premiumFeatures
+    })
+  } catch (error) {
+    console.error("Profile API error:", error)
+    res.status(500).json({ error: "Failed to load profile data" })
+  }
+})
+
+// History API
+router.get("/api/history", async (req, res) => {
+  try {
+    const bookings = await Booking.find({ user: req.user._id }).populate("mechanic", "name").sort({ createdAt: -1 })
+
+    const subscription = await Subscription.findOne({
+      user: req.user._id,
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    })
+    const isPremium = !!subscription
+
+    // Get basic user booking count
+    const activeBookingCount = await Booking.countDocuments({
+      user: req.user._id,
+      status: { $ne: "cancelled" }
+    })
+
+    // Calculate remaining bookings for basic users
+    const remainingBookings = isPremium ? "Unlimited" : Math.max(0, 2 - activeBookingCount)
+
+    res.json({
+      bookings,
+      user: req.user,
+      isPremium,
+      subscription,
+      remainingBookings,
+    })
+  } catch (error) {
+    console.error("History API error:", error)
+    res.status(500).json({ error: "Failed to load booking history" })
+  }
+})
+
+// Book API
+router.get("/api/book", async (req, res) => {
+  try {
+    const subs = await Subscription.findOne({ user: req.user._id, status: "active", expiresAt: { $gt: new Date() } })
+
+    res.json({
+      user: req.user,
+      isPremium: !!subs,
+      plan: subs?.plan
+    })
+  } catch (error) {
+    console.error("Book API error:", error)
+    res.status(500).json({ error: "Failed to load book data" })
+  }
+})
+
+// Bookings count API (for profile)
+router.get("/api/bookings/count", async (req, res) => {
+  try {
+    const count = await Booking.countDocuments({ user: req.user._id })
+    res.json({ count })
+  } catch (error) {
+    console.error("Bookings count API error:", error)
+    res.status(500).json({ error: "Failed to get booking count" })
+  }
+})
+
+// Premium API
+router.get("/api/premium", async (req, res) => {
+  try {
+    const subscription = await Subscription.findOne({
+      user: req.user._id,
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    })
+
+    const activeBookingCount = await Booking.countDocuments({
+      user: req.user._id,
+      status: { $ne: "cancelled" }
+    })
+
+    res.json({
+      subscription,
+      activeBookingCount,
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    })
+  } catch (error) {
+    console.error("Premium API error:", error)
+    res.status(500).json({ error: "Failed to load premium data" })
+  }
+})
+
+// Emergency API
+router.get("/api/emergency", async (req, res) => {
+  try {
+    const subscription = await Subscription.findOne({
+      user: req.user._id,
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    })
+
+    res.json({
+      user: req.user,
+      subscription,
+    })
+  } catch (error) {
+    console.error("Emergency API error:", error)
+    res.status(500).json({ error: "Failed to load emergency data" })
+  }
+})
+
+// Maintenance API
+router.get("/api/maintenance", async (req, res) => {
+  try {
+    const subscription = await Subscription.findOne({
+      user: req.user._id,
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    })
+
+    const recentMaintenance = await Booking.find({
+      user: req.user._id,
+      problemCategory: "Maintenance",
+      status: { $in: ["completed", "cancelled"] }
+    }).sort({ createdAt: -1 }).limit(5)
+
+    res.json({
+      user: req.user,
+      subscription,
+      recentMaintenance,
+    })
+  } catch (error) {
+    console.error("Maintenance API error:", error)
+    res.status(500).json({ error: "Failed to load maintenance data" })
+  }
+})
 
 module.exports = router

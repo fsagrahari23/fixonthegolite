@@ -86,93 +86,11 @@
           <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>All Bookings</h5>
         </div>
         <div class="card-body p-0">
-          <% if (bookings.length === 0) { %>
+          <div id="history-content">
             <div class="text-center py-5">
-              <img src="/images/empty-bookings.png" alt="No Bookings" class="img-fluid mb-3" style="max-width: 200px;">
-              <h5>No bookings found</h5>
-              <p class="text-muted">You haven't made any bookings yet.</p>
-              <a href="/user/book" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i> Create Your First Booking
-              </a>
+              <p class="text-muted">Loading bookings...</p>
             </div>
-          <% } else { %>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle" id="bookingsTable">
-                <thead class="table-light">
-                  <tr>
-                    <th>Date</th>
-                    <th>Problem</th>
-                    <th>Mechanic</th>
-                    <th>Status</th>
-                    <th>Payment</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% bookings.forEach(booking => { %>
-                    <tr data-status="<%= booking.status %>" data-category="<%= booking.problemCategory %>" data-date="<%= new Date(booking.createdAt).toISOString() %>">
-                      <td>
-                        <div class="d-flex flex-column">
-                          <span><%= new Date(booking.createdAt).toLocaleDateString() %></span>
-                          <small class="text-muted"><%= new Date(booking.createdAt).toLocaleTimeString() %></small>
-                        </div>
-                      </td>
-                      <td>
-                        <span class="d-inline-block text-truncate" style="max-width: 150px;" title="<%= booking.problemCategory %>">
-                          <%= booking.problemCategory %>
-                        </span>
-                      </td>
-                      <td>
-                        <% if (booking.mechanic) { %>
-                          <div class="d-flex align-items-center">
-                            <div class="avatar-circle bg-primary text-white me-2">
-                              <%= booking.mechanic.name.charAt(0).toUpperCase() %>
-                            </div>
-                            <span><%= booking.mechanic.name %></span>
-                          </div>
-                        <% } else { %>
-                          <span class="text-muted">Not assigned</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <span class="booking-status status-<%= booking.status %>">
-                          <%= booking.status %>
-                        </span>
-                      </td>
-                      <td>
-                        <% if (booking.status === 'completed') { %>
-                          <% if (booking.payment && booking.payment.status === 'completed') { %>
-                            <span class="badge bg-success">Paid</span>
-                          <% } else { %>
-                            <span class="badge bg-warning text-dark">Pending</span>
-                          <% } %>
-                        <% } else { %>
-                          <span class="badge bg-secondary">N/A</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <div class="btn-group">
-                          <a href="/user/booking/<%= booking._id %>" class="btn btn-sm btn-primary">
-                            <i class="fas fa-eye"></i> View
-                          </a>
-                          <% if (booking.status === 'completed' && booking.payment && booking.payment.status === 'pending') { %>
-                            <a href="/payment/<%= booking._id %>" class="btn btn-sm btn-success">
-                              <i class="fas fa-credit-card"></i> Pay
-                            </a>
-                          <% } %>
-                          <% if (booking.mechanic && ['accepted', 'in-progress'].includes(booking.status)) { %>
-                            <a href="/chat/<%= booking._id %>" class="btn btn-sm btn-info">
-                              <i class="fas fa-comments"></i> Chat
-                            </a>
-                          <% } %>
-                        </div>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
-          <% } %>
+          </div>
         </div>
       </div>
     </div>
@@ -181,7 +99,104 @@
 
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', async function() {
+    try {
+      const response = await fetch('/user/api/history');
+      const data = await response.json();
+
+      if (data.error) {
+        console.error('Error loading history data:', data.error);
+        return;
+      }
+
+      const { bookings } = data;
+
+      const historyContent = document.getElementById('history-content');
+
+      if (bookings.length === 0) {
+        historyContent.innerHTML = `
+          <div class="text-center py-5">
+            <img src="/images/empty-bookings.png" alt="No Bookings" class="img-fluid mb-3" style="max-width: 200px;">
+            <h5>No bookings found</h5>
+            <p class="text-muted">You haven't made any bookings yet.</p>
+            <a href="/user/book" class="btn btn-primary">
+              <i class="fas fa-plus me-2"></i> Create Your First Booking
+            </a>
+          </div>
+        `;
+      } else {
+        let tableHtml = `
+          <div class="table-responsive">
+            <table class="table table-hover align-middle" id="bookingsTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Problem</th>
+                  <th>Mechanic</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        bookings.forEach(booking => {
+          tableHtml += `
+            <tr data-status="${booking.status}" data-category="${booking.problemCategory}" data-date="${new Date(booking.createdAt).toISOString()}">
+              <td>
+                <div class="d-flex flex-column">
+                  <span>${new Date(booking.createdAt).toLocaleDateString()}</span>
+                  <small class="text-muted">${new Date(booking.createdAt).toLocaleTimeString()}</small>
+                </div>
+              </td>
+              <td>
+                <span class="d-inline-block text-truncate" style="max-width: 150px;" title="${booking.problemCategory}">
+                  ${booking.problemCategory}
+                </span>
+              </td>
+              <td>
+                ${booking.mechanic ? `
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-circle bg-primary text-white me-2">
+                      ${booking.mechanic.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span>${booking.mechanic.name}</span>
+                  </div>
+                ` : '<span class="text-muted">Not assigned</span>'}
+              </td>
+              <td>
+                <span class="booking-status status-${booking.status}">
+                  ${booking.status}
+                </span>
+              </td>
+              <td>
+                ${booking.status === 'completed' ? (booking.payment && booking.payment.status === 'completed' ? '<span class="badge bg-success">Paid</span>' : '<span class="badge bg-warning text-dark">Pending</span>') : '<span class="badge bg-secondary">N/A</span>'}
+              </td>
+              <td>
+                <div class="btn-group">
+                  <a href="/user/booking/${booking._id}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-eye"></i> View
+                  </a>
+                  ${booking.status === 'completed' && booking.payment && booking.payment.status === 'pending' ? `<a href="/payment/${booking._id}" class="btn btn-sm btn-success"><i class="fas fa-credit-card"></i> Pay</a>` : ''}
+                  ${booking.mechanic && ['accepted', 'in-progress'].includes(booking.status) ? `<a href="/chat/${booking._id}" class="btn btn-sm btn-info"><i class="fas fa-comments"></i> Chat</a>` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        tableHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+        historyContent.innerHTML = tableHtml;
+      }
+
+    } catch (error) {
+      console.error('Error fetching history data:', error);
+    }
+
+    // Now set up filters
     const searchInput = document.getElementById('searchBooking');
     const statusFilter = document.getElementById('statusFilter');
     const categoryFilter = document.getElementById('categoryFilter');
