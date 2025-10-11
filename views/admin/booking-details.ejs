@@ -334,7 +334,9 @@
           </h5>
         </div>
         <div class="card-body p-0">
-          <div id="booking-map" style="height: 250px"></div>
+          <div id="booking-map" style="height: 250px"
+               data-lat="<%= (booking.location && booking.location.coordinates && booking.location.coordinates[1]) || 0 %>"
+               data-lng="<%= (booking.location && booking.location.coordinates && booking.location.coordinates[0]) || 0 %>"></div>
           <div class="p-3">
             <p class="mb-0">
               <i class="fas fa-map-marker-alt text-danger me-2"></i><%=
@@ -496,3 +498,37 @@
     transition: opacity 0.3s ease;
   }
 </style>
+
+<!-- Leaflet JS for maps -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Initialize booking location map
+    const bookingMapEl = document.getElementById('booking-map');
+    if (bookingMapEl) {
+      const bookingLat = parseFloat(bookingMapEl.getAttribute('data-lat')) || 0;
+      const bookingLng = parseFloat(bookingMapEl.getAttribute('data-lng')) || 0;
+      const bookingMap = L.map('booking-map').setView([bookingLat, bookingLng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(bookingMap);
+
+      L.marker([bookingLat, bookingLng]).addTo(bookingMap)
+        .bindPopup('Booking Location')
+        .openPopup();
+    }
+
+    // Optionally initialize tracking map placeholder (if present)
+    const trackingMapEl = document.getElementById('tracking-map');
+    if (trackingMapEl) {
+      // Fallback to booking location for initial view; live tracking can update this later
+      const baseLat = bookingMapEl ? (parseFloat(bookingMapEl.getAttribute('data-lat')) || 0) : 0;
+      const baseLng = bookingMapEl ? (parseFloat(bookingMapEl.getAttribute('data-lng')) || 0) : 0;
+      const trackingMap = L.map('tracking-map').setView([baseLat, baseLng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(trackingMap);
+    }
+  });
+</script>
