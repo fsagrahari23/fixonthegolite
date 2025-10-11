@@ -4,19 +4,21 @@ const User = require("../models/User");
 const MechanicProfile = require("../models/MechanicProfile");
 const Booking = require("../models/Booking");
 const Chat = require("../models/Chat");
+const path = require("path");
 
-// Mechanic dashboard
-router.get("/dashboard", async (req, res) => {
+// Serve static mechanic dashboard HTML
+router.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "mechanic", "dashboard.html"));
+});
+
+// API: dashboard data as JSON (used by the static HTML)
+router.get("/api/dashboard", async (req, res) => {
   try {
-    // Get mechanic profile
     const profile = await MechanicProfile.findOne({ user: req.user._id });
-
-    // Get mechanic's bookings
     const bookings = await Booking.find({ mechanic: req.user._id })
       .populate("user", "name phone")
       .sort({ createdAt: -1 });
-   
-    // Get stats
+
     const stats = {
       total: bookings.length,
       pending: bookings.filter((b) => b.status === "pending").length,
@@ -25,39 +27,36 @@ router.get("/dashboard", async (req, res) => {
       cancelled: bookings.filter((b) => b.status === "cancelled").length,
     };
 
-    // Calculate earnings
     const completedBookings = bookings.filter(
-      (b) => b.status === "completed" && b.payment.status === "completed"
+      (b) => b.status === "completed" && b.payment && b.payment.status === "completed"
     );
     const totalEarnings = completedBookings.reduce(
-      (sum, booking) => sum + booking.payment.amount,
+      (sum, booking) => sum + (booking.payment?.amount || 0),
       0
     );
 
-    // Get today's earnings
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayBookings = completedBookings.filter(
       (b) => new Date(b.updatedAt) >= today
     );
     const todayEarnings = todayBookings.reduce(
-      (sum, booking) => sum + booking.payment.amount,
+      (sum, booking) => sum + (booking.payment?.amount || 0),
       0
     );
-   
-    // Get nearby pending bookings
+
     const nearbyBookings = await Booking.find({
       status: "pending",
-      mechanic:null,
+      mechanic: null,
       location: {
         $near: {
           $geometry: {
             type: "Point",
-            coordinates:req.user.location.coordinates 
+            coordinates: req.user.location.coordinates,
           },
-          $maxDistance: 10000
-        }
-      }
+          $maxDistance: 10000,
+        },
+      },
     })
       .populate("user", "name")
       .limit(5);
@@ -69,15 +68,14 @@ router.get("/dashboard", async (req, res) => {
         $near: {
           $geometry: {
             type: "Point",
-            coordinates:req.user.location.coordinates 
+            coordinates: req.user.location.coordinates,
           },
-          $maxDistance: 10000
-        }
-      }
+          $maxDistance: 10000,
+        },
+      },
     }).populate("user", "name");
-    
 
-    res.render("mechanic/dashboard", {
+    res.json({
       title: "Mechanic Dashboard",
       user: req.user,
       profile,
@@ -85,54 +83,45 @@ router.get("/dashboard", async (req, res) => {
       stats,
       totalEarnings,
       todayEarnings,
-      nearbyBookings, 
-      userRequestedJob
+      nearbyBookings,
+      userRequestedJob,
+      flash: {
+        success_msg: req.flash('success_msg') || [],
+        error_msg: req.flash('error_msg') || [],
+        error: req.flash('error') || [],
+      },
     });
   } catch (error) {
-    console.error("Mechanic dashboard error:", error);
-    req.flash("error_msg", "Failed to load dashboard");
-    res.redirect("/");
+    console.error("Mechanic dashboard API error:", error);
+    res.status(500).json({ error: "Failed to load dashboard data" });
   }
 });
 
 // View booking details
-router.get("/booking/:id", async (req, res) => {
+router.get('/booking/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'mechanic', 'booking-details.html'));
+});
+
+// API: booking details
+router.get('/api/booking/:id', async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate("user", "name phone address")
-      .populate("mechanic", "name phone");
+      .populate('user', 'name phone address')
+      .populate('mechanic', 'name phone');
 
-    if (!booking) {
-      req.flash("error_msg", "Booking not found");
-      return res.redirect("/mechanic/dashboard");
+  if (!booking) return res.status(404).json({ error: 'Booking not found' });
+
+    if (booking.mechanic && booking.mechanic._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized' });
     }
 
-    // Check if mechanic is authorized to view this booking
-    if (
-      booking.mechanic &&
-      booking.mechanic._id.toString() !== req.user._id.toString()
-    ) {
-      req.flash("error_msg", "Not authorized");
-      return res.redirect("/mechanic/dashboard");
-    }
-
-    // Get chat if exists
     const chat = await Chat.findOne({ booking: booking._id });
-
-    // Get mechanic profile for hourly rate
     const profile = await MechanicProfile.findOne({ user: req.user._id });
 
-    res.render("mechanic/booking-details", {
-      title: "Booking Details",
-      booking,
-      chat,
-      profile,
-      user: req.user,
-    });
+  res.json({ booking, chat, profile, user: req.user, flash: { success_msg: req.flash('success_msg') || [], error_msg: req.flash('error_msg') || [], error: req.flash('error') || [] } });
   } catch (error) {
-    console.error("View booking error:", error);
-    req.flash("error_msg", "Failed to load booking details");
-    res.redirect("/mechanic/dashboard");
+    console.error('Booking API error:', error);
+    res.status(500).json({ error: 'Failed to load booking details' });
   }
 });
 
@@ -287,40 +276,35 @@ router.post("/booking/:id/complete", async (req, res) => {
 });
 
 // View booking history
-router.get("/history", async (req, res) => {
+router.get('/history', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'mechanic', 'history.html'));
+});
+
+router.get('/api/history', async (req, res) => {
   try {
     const bookings = await Booking.find({ mechanic: req.user._id })
-      .populate("user", "name")
+      .populate('user', 'name')
       .sort({ createdAt: -1 });
     const profile = await MechanicProfile.findOne({ user: req.user._id });
-
-    res.render("mechanic/history", {
-      title: "Booking History",
-      bookings,
-      user: req.user,
-      profile
-    });
+  res.json({ bookings, user: req.user, profile, flash: { success_msg: req.flash('success_msg') || [], error_msg: req.flash('error_msg') || [], error: req.flash('error') || [] } });
   } catch (error) {
-    console.error("Booking history error:", error);
-    req.flash("error_msg", "Failed to load booking history");
-    res.redirect("/mechanic/dashboard");
+    console.error('History API error:', error);
+    res.status(500).json({ error: 'Failed to load booking history' });
   }
 });
 
 // Profile page
-router.get("/profile", async (req, res) => {
+router.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'mechanic', 'profile.html'));
+});
+
+router.get('/api/profile', async (req, res) => {
   try {
     const profile = await MechanicProfile.findOne({ user: req.user._id });
-
-    res.render("mechanic/profile", {
-      title: "My Profile",
-      user: req.user,
-      profile,
-    });
+  res.json({ user: req.user, profile, flash: { success_msg: req.flash('success_msg') || [], error_msg: req.flash('error_msg') || [], error: req.flash('error') || [] } });
   } catch (error) {
-    console.error("Profile error:", error);
-    req.flash("error_msg", "Failed to load profile");
-    res.redirect("/mechanic/dashboard");
+    console.error('Profile API error:', error);
+    res.status(500).json({ error: 'Failed to load profile' });
   }
 });
 

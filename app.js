@@ -35,12 +35,9 @@ const io = socketIo(server);
 // Make io available to routes via app.get('io')
 app.set('io', io);
 
-// Connect to MongoDB
+// Connect to MongoDB (driver v4+ no longer needs deprecated options)
 mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
@@ -113,8 +110,29 @@ app.get("/", (req, res) => {
 // Socket.io setup
 require("./socket")(io);
 
-// Start server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Start server with simple port fallback to avoid EADDRINUSE
+const BASE_PORT = parseInt(process.env.PORT, 10) || 3000;
+const MAX_PORT_TRIES = 5;
+
+function startWithFallback(basePort, maxTries) {
+  let attempt = 0;
+  function tryListen(port) {
+    server.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
+  }
+
+  server.on("error", (err) => {
+    if (err && err.code === "EADDRINUSE" && attempt < maxTries) {
+      const nextPort = basePort + (++attempt);
+      console.warn(`Port ${nextPort - 1} in use, retrying on ${nextPort}...`);
+      setTimeout(() => tryListen(nextPort), 300);
+    } else {
+      throw err;
+    }
+  });
+
+  tryListen(basePort);
+}
+
+startWithFallback(BASE_PORT, MAX_PORT_TRIES);

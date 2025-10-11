@@ -6,7 +6,7 @@ const Booking = require("../models/Booking")
 const Subscription = require("../models/Subscription")
 
 // Admin dashboard
-// Admin dashboard
+
 router.get("/dashboard", async (req, res) => {
   try {
     // Get counts
@@ -80,78 +80,78 @@ router.get("/dashboard", async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5)
 
-      // monthly revenue with booking + subscription
-      // Monthly Revenue Stats - Bookings
-const bookingMonthlyRevenue = await Booking.aggregate([
-  {
-    $match: {
-      status: "completed",
-      "payment.status": "completed",
-    },
-  },
-  {
-    $group: {
-      _id: {
-        year: { $year: "$createdAt" },
-        month: { $month: "$createdAt" },
+    // monthly revenue with booking + subscription
+    // Monthly Revenue Stats - Bookings
+    const bookingMonthlyRevenue = await Booking.aggregate([
+      {
+        $match: {
+          status: "completed",
+          "payment.status": "completed",
+        },
       },
-      total: { $sum: "$payment.amount" },
-    },
-  },
-  {
-    $sort: { "_id.year": 1, "_id.month": 1 },
-  },
-])
-
-// Monthly Revenue Stats - Subscriptions
-const subscriptionMonthlyRevenue = await Subscription.aggregate([
-  {
-    $match: {
-      status: "active",
-    },
-  },
-  {
-    $group: {
-      _id: {
-        year: { $year: "$createdAt" },
-        month: { $month: "$createdAt" },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          total: { $sum: "$payment.amount" },
+        },
       },
-      total: { $sum: "$amount" },
-    },
-  },
-  {
-    $sort: { "_id.year": 1, "_id.month": 1 },
-  },
-])
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+    ])
 
-// Combine both sources into a unified revenue map
-const monthlyRevenueMap = {}
+    // Monthly Revenue Stats - Subscriptions
+    const subscriptionMonthlyRevenue = await Subscription.aggregate([
+      {
+        $match: {
+          status: "active",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+    ])
 
-bookingMonthlyRevenue.forEach(({ _id, total }) => {
-  const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
-  monthlyRevenueMap[key] = { booking: total, subscription: 0 }
-})
+    // Combine both sources into a unified revenue map
+    const monthlyRevenueMap = {}
 
-subscriptionMonthlyRevenue.forEach(({ _id, total }) => {
-  const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
-  if (!monthlyRevenueMap[key]) {
-    monthlyRevenueMap[key] = { booking: 0, subscription: total }
-  } else {
-    monthlyRevenueMap[key].subscription = total
-  }
-})
+    bookingMonthlyRevenue.forEach(({ _id, total }) => {
+      const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
+      monthlyRevenueMap[key] = { booking: total, subscription: 0 }
+    })
 
-// Format the final monthly revenue chart data
-const monthlyRevenueStats = Object.keys(monthlyRevenueMap).map((month) => {
-  return {
-    month, // Format: "2025-04"
-    booking: monthlyRevenueMap[month].booking,
-    subscription: monthlyRevenueMap[month].subscription,
-    total: monthlyRevenueMap[month].booking + monthlyRevenueMap[month].subscription,
-  }
-}).sort((a, b) => a.month.localeCompare(b.month)) // Ensure chronological order
+    subscriptionMonthlyRevenue.forEach(({ _id, total }) => {
+      const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
+      if (!monthlyRevenueMap[key]) {
+        monthlyRevenueMap[key] = { booking: 0, subscription: total }
+      } else {
+        monthlyRevenueMap[key].subscription = total
+      }
+    })
 
-console.log("Monthly Revenue Stats:", monthlyRevenueStats)
+    // Format the final monthly revenue chart data
+    const monthlyRevenueStats = Object.keys(monthlyRevenueMap).map((month) => {
+      return {
+        month, // Format: "2025-04"
+        booking: monthlyRevenueMap[month].booking,
+        subscription: monthlyRevenueMap[month].subscription,
+        total: monthlyRevenueMap[month].booking + monthlyRevenueMap[month].subscription,
+      }
+    }).sort((a, b) => a.month.localeCompare(b.month)) // Ensure chronological order
+
+    console.log("Monthly Revenue Stats:", monthlyRevenueStats)
 
     res.render("admin/dashboard", {
       title: "Admin Dashboard",
@@ -458,13 +458,102 @@ router.get("/booking/:id", async (req, res) => {
       return res.redirect("/admin/bookings")
     }
 
+    // Build list of available mechanics for assignment (approved, available, skill match)
+    let availableMechanics = []
+    try {
+      // Find approved mechanic users
+      const approvedMechanicUsers = await User.find(
+        { role: "mechanic", isApproved: true },
+        "_id name"
+      )
+
+      const approvedIds = approvedMechanicUsers.map((u) => u._id)
+
+      // Find matching mechanic profiles by specialization and availability
+      const profiles = await MechanicProfile.find({
+        user: { $in: approvedIds },
+        availability: true,
+        // If a booking has a problemCategory, prefer mechanics with that specialization
+        ...(booking.problemCategory
+          ? { specialization: booking.problemCategory }
+          : {}),
+      })
+        .select("user specialization experience")
+        .populate("user", "name")
+
+      // Shape for the view: _id (user id), name, specialization, experience
+      availableMechanics = profiles.map((p) => ({
+        _id: p.user._id,
+        name: p.user.name,
+        specialization: p.specialization || [],
+        experience: p.experience || 0,
+      }))
+    } catch (e) {
+      console.error("Failed to load available mechanics:", e)
+      availableMechanics = []
+    }
+
     res.render("admin/booking-details", {
       title: "Booking Details",
       booking,
+      availableMechanics,
     })
   } catch (error) {
     console.error("Booking details error:", error)
     req.flash("error_msg", "Failed to load booking details")
+    res.redirect("/admin/bookings")
+  }
+})
+
+// Assign mechanic to a booking
+router.post("/booking/:id/assign-mechanic", async (req, res) => {
+  try {
+    const { mechanicId } = req.body
+    const booking = await Booking.findById(req.params.id)
+    if (!booking) {
+      req.flash("error_msg", "Booking not found")
+      return res.redirect("/admin/bookings")
+    }
+
+    // Validate mechanic user exists and is an approved mechanic
+    const mechanicUser = await User.findOne({ _id: mechanicId, role: "mechanic", isApproved: true })
+    if (!mechanicUser) {
+      req.flash("error_msg", "Invalid mechanic selection")
+      return res.redirect(`/admin/booking/${req.params.id}`)
+    }
+
+    booking.mechanic = mechanicUser._id
+    // When a mechanic is assigned from admin, mark as accepted if still pending
+    if (booking.status === "pending") {
+      booking.status = "accepted"
+    }
+    booking.updatedAt = new Date()
+    await booking.save()
+
+    req.flash("success_msg", "Mechanic assigned successfully")
+    res.redirect(`/admin/booking/${req.params.id}`)
+  } catch (error) {
+    console.error("Assign mechanic error:", error)
+    req.flash("error_msg", "Failed to assign mechanic")
+    res.redirect(`/admin/booking/${req.params.id}`)
+  }
+})
+
+// Delete a booking
+router.post("/booking/:id/delete", async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+    if (!booking) {
+      req.flash("error_msg", "Booking not found")
+      return res.redirect("/admin/bookings")
+    }
+
+    await Booking.findByIdAndDelete(req.params.id)
+    req.flash("success_msg", "Booking deleted successfully")
+    res.redirect("/admin/bookings")
+  } catch (error) {
+    console.error("Delete booking error:", error)
+    req.flash("error_msg", "Failed to delete booking")
     res.redirect("/admin/bookings")
   }
 })
@@ -480,6 +569,20 @@ router.get("/payments", async (req, res) => {
       .populate("user", "name")
       .populate("mechanic", "name")
       .sort({ updatedAt: -1 });
+
+    // Payment status counts (bookings with amount > 0 and status completed)
+    const [completedPaymentsCount, pendingPaymentsCount] = await Promise.all([
+      Booking.countDocuments({
+        status: "completed",
+        "payment.status": "completed",
+        "payment.amount": { $gt: 0 },
+      }),
+      Booking.countDocuments({
+        status: "completed",
+        "payment.status": "pending",
+        "payment.amount": { $gt: 0 },
+      }),
+    ]);
 
     // Get active subscriptions with payment info
     const subscriptions = await Subscription.find({
@@ -505,7 +608,7 @@ router.get("/payments", async (req, res) => {
 
     const subscriptionTotal = subscriptionRevenue.length > 0 ? subscriptionRevenue[0].total : 0;
 
-    const totalAmount = bookingTotal + subscriptionTotal;
+    const totalAmount = (bookingTotal + subscriptionTotal).toFixed(2);
 
     res.render("admin/payments", {
       title: "Manage Payments",
@@ -514,6 +617,8 @@ router.get("/payments", async (req, res) => {
       totalAmount,
       bookingTotal,
       subscriptionTotal,
+  completedPaymentsCount,
+  pendingPaymentsCount,
     });
   } catch (error) {
     console.error("Manage payments error:", error);

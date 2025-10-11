@@ -6,12 +6,10 @@
     </div>
   </div>
 
-  <% if (subscription && subscription.status === 'active' && new Date(subscription.expiresAt) > new Date()) { %>
-    <div class="alert alert-success">
-      <i class="fas fa-check-circle me-2"></i> You are currently on the <strong><%= subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) %> Premium Plan</strong>. 
-      Your membership expires on <strong><%= new Date(subscription.expiresAt).toLocaleDateString() %></strong>.
-    </div>
-  <% } %>
+  <div id="subscription-alert" class="alert alert-success" style="display: none;">
+    <i class="fas fa-check-circle me-2"></i> You are currently on the <strong id="subscription-plan"></strong> Premium Plan.
+    Your membership expires on <strong id="subscription-expires"></strong>.
+  </div>
 
   <div class="row">
     <div class="col-md-4 mb-4">
@@ -37,9 +35,7 @@
           
           <div class="mt-auto">
             <div class="d-grid">
-              <% if (!subscription || subscription.status !== 'active') { %>
-                <button class="btn btn-outline-secondary" disabled>Current Plan</button>
-              <% } %>
+              <button class="btn btn-outline-secondary" disabled>Current Plan</button>
             </div>
           </div>
         </div>
@@ -72,20 +68,21 @@
           
           <div class="mt-auto">
             <div class="d-grid">
-              <% if (subscription && subscription.status === 'active' && subscription.plan === 'monthly') { %>
-                <form action="/user/premium/cancel" method="POST">
-                  <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel your subscription?')">
-                    <i class="fas fa-times-circle me-2"></i> Cancel Subscription
-                  </button>
-                </form>
-              <% } else { %>
+              <div id="monthly-subscribe-form">
                 <form action="/user/premium/subscribe" method="POST">
                   <input type="hidden" name="plan" value="monthly">
                   <button type="submit" class="btn btn-primary">
                     <i class="fas fa-crown me-2"></i> Subscribe Now
                   </button>
                 </form>
-              <% } %>
+              </div>
+              <div id="monthly-cancel-form" style="display: none;">
+                <form action="/user/premium/cancel" method="POST">
+                  <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel your subscription?')">
+                    <i class="fas fa-times-circle me-2"></i> Cancel Subscription
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -115,20 +112,21 @@
           
           <div class="mt-auto">
             <div class="d-grid">
-              <% if (subscription && subscription.status === 'active' && subscription.plan === 'yearly') { %>
-                <form action="/user/premium/cancel" method="POST">
-                  <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel your subscription?')">
-                    <i class="fas fa-times-circle me-2"></i> Cancel Subscription
-                  </button>
-                </form>
-              <% } else { %>
+              <div id="yearly-subscribe-form">
                 <form action="/user/premium/subscribe" method="POST">
                   <input type="hidden" name="plan" value="yearly">
                   <button type="submit" class="btn btn-dark">
                     <i class="fas fa-crown me-2"></i> Subscribe Now
                   </button>
                 </form>
-              <% } %>
+              </div>
+              <div id="yearly-cancel-form" style="display: none;">
+                <form action="/user/premium/cancel" method="POST">
+                  <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel your subscription?')">
+                    <i class="fas fa-times-circle me-2"></i> Cancel Subscription
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -295,3 +293,27 @@
     font-size: 20px;
   }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    fetch('/user/api/premium')
+      .then(response => response.json())
+      .then(data => {
+        const subscription = data.subscription;
+        if (subscription && subscription.status === 'active' && new Date(subscription.expiresAt) > new Date()) {
+          document.getElementById('subscription-alert').style.display = 'block';
+          document.getElementById('subscription-plan').textContent = subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1);
+          document.getElementById('subscription-expires').textContent = new Date(subscription.expiresAt).toLocaleDateString();
+
+          if (subscription.plan === 'monthly') {
+            document.getElementById('monthly-subscribe-form').style.display = 'none';
+            document.getElementById('monthly-cancel-form').style.display = 'block';
+          } else if (subscription.plan === 'yearly') {
+            document.getElementById('yearly-subscribe-form').style.display = 'none';
+            document.getElementById('yearly-cancel-form').style.display = 'block';
+          }
+        }
+      })
+      .catch(error => console.error('Error fetching premium data:', error));
+  });
+</script>
