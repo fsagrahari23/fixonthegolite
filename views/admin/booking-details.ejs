@@ -382,7 +382,10 @@
               required
             >
               <option value="" selected disabled>Choose a mechanic...</option>
-              <% availableMechanics.forEach(mechanic => { %>
+              <% if (!availableMechanics || availableMechanics.length === 0) { %>
+              <option value="" disabled>No matching mechanics available</option>
+              <% } %>
+              <% (availableMechanics || []).forEach(mechanic => { %>
               <option value="<%= mechanic._id %>">
                 <%= mechanic.name %> - <%= mechanic?.specialization?.join(', ') %>
                 - <%= mechanic.experience %> years
@@ -459,6 +462,8 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    /* Keep the markers inside the card */
+    padding-left: 16px;
   }
 
   .timeline-item {
@@ -474,7 +479,7 @@
   .timeline-marker {
     position: absolute;
     top: 15px;
-    left: -8px;
+    left: -8px; /* centered on the border-left */
     width: 15px;
     height: 15px;
     border-radius: 50%;
