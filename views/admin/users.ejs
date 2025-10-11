@@ -69,86 +69,14 @@
           <span class="badge bg-primary rounded-pill"><%= users.length %> Users</span>
         </div>
         <div class="card-body p-0">
-          <% if (users.length === 0) { %>
+          <div id="usersContent">
             <div class="text-center py-5">
-              <img src="/images/empty-users.png" alt="No Users" class="img-fluid mb-3" style="max-width: 200px;">
-              <h5>No users found</h5>
-              <p class="text-muted">There are no users in the system yet.</p>
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2">Loading users...</p>
             </div>
-          <% } else { %>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle" id="usersTable">
-                <thead class="table-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Joined Date</th>
-                    <th>Bookings</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% users.forEach(user => { %>
-                    <tr data-date="<%= new Date(user.createdAt).toISOString() %>">
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <div class="avatar-circle bg-primary text-white me-2">
-                            <%= user.name.charAt(0).toUpperCase() %>
-                          </div>
-                          <span><%= user.name %></span>
-                        </div>
-                      </td>
-                      <td><%= user.email %></td>
-                      <td><%= user.phone %></td>
-                      <td><%= new Date(user.createdAt).toLocaleDateString() %></td>
-                      <td>
-                        <span class="badge bg-info rounded-pill">
-                          <%= user.bookingCount || 0 %>
-                        </span>
-                      </td>
-                      <td>
-                        <span class="badge bg-success">Active</span>
-                      </td>
-                      <td>
-                        <div class="btn-group">
-                          <a href="/admin/user/<%= user._id %>" class="btn btn-sm btn-primary">
-                            <i class="fas fa-eye"></i> View
-                          </a>
-                          <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal<%= user._id %>">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                        
-                        <!-- Delete User Modal -->
-                        <div class="modal fade" id="deleteUserModal<%= user._id %>" tabindex="-1" aria-labelledby="deleteUserModalLabel<%= user._id %>" aria-hidden="true">
-                          <div class="modal-dialog">
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title" id="deleteUserModalLabel<%= user._id %>">Delete User</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                              </div>
-                              <div class="modal-body">
-                                <p>Are you sure you want to delete the user <strong><%= user.name %></strong>?</p>
-                                <p class="text-danger">This action cannot be undone. All associated bookings and data will be deleted.</p>
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <form action="/admin/user/<%= user._id %>/delete" method="POST">
-                                  <button type="submit" class="btn btn-danger">Delete User</button>
-                                </form>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
-          <% } %>
+          </div>
         </div>
       </div>
     </div>
@@ -186,8 +114,129 @@
     const dateFromFilter = document.getElementById('dateFrom');
     const dateToFilter = document.getElementById('dateTo');
     const applyFiltersBtn = document.getElementById('applyFilters');
-    const usersTable = document.getElementById('usersTable');
-    const tableRows = usersTable ? usersTable.querySelectorAll('tbody tr') : [];
+
+    let usersData = [];
+    let registrationChart, activityChart;
+
+    // Fetch users data from API
+    async function fetchUsers() {
+      try {
+        const response = await fetch('/admin/api/users');
+        const data = await response.json();
+
+        if (data.users) {
+          usersData = data.users;
+          renderUsers(data.users);
+          initializeCharts(data.users);
+        } else {
+          console.error('Failed to fetch users:', data.message);
+          document.getElementById('usersContent').innerHTML = `
+            <div class="text-center py-5">
+              <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+              <h5>Failed to load users</h5>
+              <p class="text-muted">Please try refreshing the page.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        document.getElementById('usersContent').innerHTML = `
+          <div class="text-center py-5">
+            <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+            <h5>Error loading users</h5>
+            <p class="text-muted">Please check your connection and try again.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Render users table
+    function renderUsers(users) {
+      const userCount = document.querySelector('.badge.bg-primary.rounded-pill');
+      userCount.textContent = `${users.length} Users`;
+
+      if (users.length === 0) {
+        document.getElementById('usersContent').innerHTML = `
+          <div class="text-center py-5">
+            <img src="/images/empty-users.png" alt="No Users" class="img-fluid mb-3" style="max-width: 200px;">
+            <h5>No users found</h5>
+            <p class="text-muted">There are no users in the system yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const tableHTML = `
+        <div class="table-responsive">
+          <table class="table table-hover align-middle" id="usersTable">
+            <thead class="table-light">
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Joined Date</th>
+                <th>Bookings</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(user => `
+                <tr data-date="${new Date(user.createdAt).toISOString()}">
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-circle bg-primary text-white me-2">
+                        ${user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span>${user.name}</span>
+                    </div>
+                  </td>
+                  <td>${user.email}</td>
+                  <td>${user.phone || 'N/A'}</td>
+                  <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    <span class="badge bg-info rounded-pill">
+                      ${user.bookingCount || 0}
+                    </span>
+                  </td>
+                  <td>
+                    ${user.premium ? `
+                      <span class="badge bg-warning text-dark">
+                        <i class="fas fa-crown me-1"></i>Premium
+                      </span>
+                    ` : '<span class="badge bg-success">Active</span>'}
+                  </td>
+                  <td>
+                    <div class="btn-group">
+                      <a href="/admin/user/${user._id}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}', '${user.name}')">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById('usersContent').innerHTML = tableHTML;
+    }
+
+    // Delete user function
+    window.deleteUser = function(userId, userName) {
+      if (confirm(`Are you sure you want to delete the user ${userName}? This action cannot be undone. All associated bookings and data will be deleted.`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/user/${userId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+      }
+    };
 
     // Apply filters function
     function applyFilters() {
@@ -195,6 +244,8 @@
       const statusValue = statusFilter.value;
       const dateFromValue = dateFromFilter.value ? new Date(dateFromFilter.value) : null;
       const dateToValue = dateToFilter.value ? new Date(dateToFilter.value) : null;
+
+      const tableRows = document.querySelectorAll('#usersTable tbody tr');
 
       tableRows.forEach(row => {
         const date = new Date(row.getAttribute('data-date'));
@@ -224,6 +275,108 @@
       });
     }
 
+    // Initialize charts
+    function initializeCharts(users) {
+      // Registration Chart
+      if (document.getElementById('registrationChart')) {
+        const months = [];
+        const registrations = [];
+
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          months.push(date.toLocaleString('default', { month: 'short' }));
+          registrations.push(0);
+        }
+
+        users.forEach(user => {
+          const date = new Date(user.createdAt);
+          const currentDate = new Date();
+          const sixMonthsAgo = new Date();
+          sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
+
+          if (date >= sixMonthsAgo) {
+            const monthIndex = currentDate.getMonth() - date.getMonth();
+            const normalizedIndex = monthIndex < 0 ? monthIndex + 12 : monthIndex;
+            if (normalizedIndex < 6) {
+              registrations[5 - normalizedIndex]++;
+            }
+          }
+        });
+
+        const registrationCtx = document.getElementById('registrationChart').getContext('2d');
+        if (registrationChart) {
+          registrationChart.destroy();
+        }
+        registrationChart = new Chart(registrationCtx, {
+          type: 'bar',
+          data: {
+            labels: months,
+            datasets: [{
+              label: 'New Users',
+              data: registrations,
+              backgroundColor: '#4361ee',
+              borderWidth: 0,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Activity Chart
+      if (document.getElementById('activityChart')) {
+        const premiumUsers = users.filter(user => user.premium).length;
+        const regularUsers = users.length - premiumUsers;
+
+        const activityCtx = document.getElementById('activityChart').getContext('2d');
+        if (activityChart) {
+          activityChart.destroy();
+        }
+        activityChart = new Chart(activityCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Regular Users', 'Premium Users'],
+            datasets: [{
+              data: [regularUsers, premiumUsers],
+              backgroundColor: ['#38b000', '#f8961e'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  boxWidth: 12,
+                  padding: 15
+                }
+              }
+            },
+            cutout: '70%'
+          }
+        });
+      }
+    }
+
     // Event listeners
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener('click', applyFilters);
@@ -241,95 +394,8 @@
       });
     }
 
-    // Registration Chart
-    if (document.getElementById('registrationChart')) {
-      const months = [];
-      const registrations = [];
-
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        months.push(date.toLocaleString('default', { month: 'short' }));
-        registrations.push(0);
-      }
-
-      tableRows.forEach(row => {
-        const date = new Date(row.getAttribute('data-date'));
-        const currentDate = new Date();
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
-
-        if (date >= sixMonthsAgo) {
-          const monthIndex = currentDate.getMonth() - date.getMonth();
-          const normalizedIndex = monthIndex < 0 ? monthIndex + 12 : monthIndex;
-          if (normalizedIndex < 6) {
-            registrations[5 - normalizedIndex]++;
-          }
-        }
-      });
-
-      const registrationCtx = document.getElementById('registrationChart').getContext('2d');
-      new Chart(registrationCtx, {
-        type: 'bar',
-        data: {
-          labels: months,
-          datasets: [{
-            label: 'New Users',
-            data: registrations,
-            backgroundColor: '#4361ee',
-            borderWidth: 0,
-            borderRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                precision: 0
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // Activity Chart
-    if (document.getElementById('activityChart')) {
-      const activityCtx = document.getElementById('activityChart').getContext('2d');
-      new Chart(activityCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Active Users', 'Inactive Users'],
-          datasets: [{
-            data: [<%= users.length %>, 0], // Use EJS syntax correctly here
-            backgroundColor: ['#38b000', '#ef476f'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 12,
-                padding: 15
-              }
-            }
-          },
-          cutout: '70%'
-        }
-      });
-    }
+    // Load data on page load
+    fetchUsers();
   });
 </script>
 

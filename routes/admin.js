@@ -4,6 +4,7 @@ const User = require("../models/User")
 const MechanicProfile = require("../models/MechanicProfile")
 const Booking = require("../models/Booking")
 const Subscription = require("../models/Subscription")
+const { isAdmin } = require("../middleware/auth")
 
 // Admin dashboard
 
@@ -802,6 +803,549 @@ router.get("/premium-users", async (req, res) => {
     console.error("Premium users error:", error)
     req.flash("error_msg", "Failed to load premium users")
     res.redirect("/admin/dashboard")
+  }
+})
+
+// API Routes for dynamic loading
+
+// Dashboard API
+router.get("/api/dashboard", isAdmin, async (req, res) => {
+  try {
+    // Get counts
+    const userCount = await User.countDocuments({ role: "user" })
+    const mechanicCount = await User.countDocuments({ role: "mechanic", isApproved: true })
+    const pendingMechanicCount = await User.countDocuments({ role: "mechanic", isApproved: false })
+    const bookingCount = await Booking.countDocuments()
+    const premiumUserCount = await User.countDocuments({ isPremium: true })
+
+    // Get recent bookings
+    const recentBookings = await Booking.find()
+      .populate("user", "name")
+      .populate("mechanic", "name")
+      .sort({ createdAt: -1 })
+      .limit(5)
+
+    // Get booking stats
+    const pendingBookings = await Booking.countDocuments({ status: "pending" })
+    const acceptedBookings = await Booking.countDocuments({ status: "accepted" })
+    const inProgressBookings = await Booking.countDocuments({ status: "in-progress" })
+    const completedBookings = await Booking.countDocuments({ status: "completed" })
+    const cancelledBookings = await Booking.countDocuments({ status: "cancelled" })
+    const emergencyBookings = await Booking.countDocuments({ emergencyRequest: true })
+
+    // Get payment stats
+    const completedPayments = await Booking.countDocuments({
+      status: "completed",
+      "payment.status": "completed",
+    })
+
+    const pendingPayments = await Booking.countDocuments({
+      status: "completed",
+      "payment.status": "pending",
+    })
+
+    // Calculate total revenue from bookings
+    const bookingRevenue = await Booking.aggregate([
+      { $match: { status: "completed", "payment.status": "completed" } },
+      { $group: { _id: null, total: { $sum: "$payment.amount" } } },
+    ])
+
+    // Calculate total revenue from subscriptions
+    const subscriptionRevenue = await Subscription.aggregate([
+      { $match: { status: "active" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ])
+
+    const bookingTotal = bookingRevenue.length > 0 ? bookingRevenue[0].total : 0
+    const subscriptionTotal = subscriptionRevenue.length > 0 ? subscriptionRevenue[0].total : 0
+    const totalRevenue = bookingTotal + subscriptionTotal
+
+    // Get premium subscription stats
+    const activeSubscriptions = await Subscription.countDocuments({
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    })
+    const monthlySubscriptions = await Subscription.countDocuments({
+      status: "active",
+      plan: "monthly",
+      expiresAt: { $gt: new Date() },
+    })
+    const yearlySubscriptions = await Subscription.countDocuments({
+      status: "active",
+      plan: "yearly",
+      expiresAt: { $gt: new Date() },
+    })
+
+    // Get recent subscriptions
+    const recentSubscriptions = await Subscription.find()
+      .populate("user", "name email")
+      .sort({ createdAt: -1 })
+      .limit(5)
+
+    // Monthly Revenue Stats - Bookings
+    const bookingMonthlyRevenue = await Booking.aggregate([
+      {
+        $match: {
+          status: "completed",
+          "payment.status": "completed",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          total: { $sum: "$payment.amount" },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+    ])
+
+    // Monthly Revenue Stats - Subscriptions
+    const subscriptionMonthlyRevenue = await Subscription.aggregate([
+      {
+        $match: {
+          status: "active",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+    ])
+
+    // Combine both sources into a unified revenue map
+    const monthlyRevenueMap = {}
+
+    bookingMonthlyRevenue.forEach(({ _id, total }) => {
+      const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
+      monthlyRevenueMap[key] = { booking: total, subscription: 0 }
+    })
+
+    subscriptionMonthlyRevenue.forEach(({ _id, total }) => {
+      const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
+      if (!monthlyRevenueMap[key]) {
+        monthlyRevenueMap[key] = { booking: 0, subscription: total }
+      } else {
+        monthlyRevenueMap[key].subscription = total
+      }
+    })
+
+    // Format the final monthly revenue chart data
+    const monthlyRevenueStats = Object.keys(monthlyRevenueMap).map((month) => {
+      return {
+        month, // Format: "2025-04"
+        booking: monthlyRevenueMap[month].booking,
+        subscription: monthlyRevenueMap[month].subscription,
+        total: monthlyRevenueMap[month].booking + monthlyRevenueMap[month].subscription,
+      }
+    }).sort((a, b) => a.month.localeCompare(b.month)) // Ensure chronological order
+
+    res.json({
+      userCount,
+      mechanicCount,
+      pendingMechanicCount,
+      bookingCount,
+      premiumUserCount,
+      recentBookings,
+      bookingStats: {
+        pending: pendingBookings,
+        accepted: acceptedBookings,
+        inProgress: inProgressBookings,
+        completed: completedBookings,
+        cancelled: cancelledBookings,
+        emergency: emergencyBookings,
+      },
+      paymentStats: {
+        completed: completedPayments,
+        pending: pendingPayments,
+        bookingRevenue: bookingTotal,
+        subscriptionRevenue: subscriptionTotal,
+        totalRevenue,
+      },
+      subscriptionStats: {
+        active: activeSubscriptions,
+        monthly: monthlySubscriptions,
+        yearly: yearlySubscriptions,
+      },
+      recentSubscriptions,
+      monthlyRevenueStats,
+    })
+  } catch (error) {
+    console.error("Admin dashboard API error:", error)
+    res.status(500).json({ error: "Failed to load dashboard data" })
+  }
+})
+
+// Users API
+router.get("/api/users", isAdmin, async (req, res) => {
+  try {
+    // Get users with premium information
+    const users = await User.find({ role: "user" }).sort({ createdAt: -1 })
+
+    // Get premium status for each user
+    const userIds = users.map((user) => user._id)
+    const subscriptions = await Subscription.find({
+      user: { $in: userIds },
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    })
+
+    // Create a map of user ID to premium status
+    const premiumUsersMap = {}
+    subscriptions.forEach((sub) => {
+      premiumUsersMap[sub.user.toString()] = {
+        plan: sub.plan,
+        expiresAt: sub.expiresAt,
+      }
+    })
+
+    // Add booking count for each user
+    const userBookingCounts = await Booking.aggregate([
+      { $match: { user: { $in: userIds } } },
+      { $group: { _id: "$user", count: { $sum: 1 } } },
+    ])
+
+    const bookingCountMap = {}
+    userBookingCounts.forEach((item) => {
+      bookingCountMap[item._id.toString()] = item.count
+    })
+
+    // Add premium and booking count info to users
+    const usersWithInfo = users.map((user) => {
+      const userObj = user.toObject()
+      userObj.premium = premiumUsersMap[user._id.toString()] || null
+      userObj.bookingCount = bookingCountMap[user._id.toString()] || 0
+      return userObj
+    })
+
+    res.json({ users: usersWithInfo })
+  } catch (error) {
+    console.error("Users API error:", error)
+    res.status(500).json({ error: "Failed to load users data" })
+  }
+})
+
+// User details API
+router.get("/api/user/:id", isAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    // Get user's bookings with count
+    const bookings = await Booking.find({ user: user._id })
+      .populate("mechanic", "name")
+      .sort({ createdAt: -1 })
+
+    const bookingCount = bookings.length
+
+    // Get premium subscription info
+    const subscription = await Subscription.findOne({
+      user: user._id,
+      status: "active",
+      expiresAt: { $gt: new Date() },
+    }).populate("user", "name email")
+
+    // Add booking count to user object
+    const userWithCount = user.toObject()
+    userWithCount.bookingCount = bookingCount
+
+    res.json({
+      user: userWithCount,
+      bookings,
+      subscription,
+    })
+  } catch (error) {
+    console.error("User details API error:", error)
+    res.status(500).json({ error: "Failed to load user details" })
+  }
+})
+
+// Bookings API
+router.get("/api/bookings", isAdmin, async (req, res) => {
+  try {
+    // Parallel fetching for performance
+    const [bookings, bookingStatsCounts, bookingByCategory, bookingTrends] = await Promise.all([
+      Booking.find()
+        .populate("user", "name")
+        .populate("mechanic", "name")
+        .sort({ createdAt: -1 }),
+
+      Promise.all([
+        Booking.countDocuments(),
+        Booking.countDocuments({ status: "pending" }),
+        Booking.countDocuments({ status: "completed" }),
+        Booking.countDocuments({ status: "cancelled" }),
+      ]),
+
+      Booking.aggregate([
+        {
+          $group: {
+            _id: { $ifNull: ["$problemCategory", "Uncategorized"] },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } }
+      ]),
+
+      Booking.aggregate([
+        {
+          $match: {
+            createdAt: {
+              $gte: new Date(new Date().setDate(new Date().getDate() - 6))
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+            },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ])
+    ])
+
+    const [total, active, completed, cancelled] = bookingStatsCounts
+
+    const bookingStats = { total, active, completed, cancelled }
+
+    res.json({
+      bookings,
+      bookingStats,
+      bookingByCategory,
+      bookingTrends
+    })
+  } catch (error) {
+    console.error("Bookings API error:", error)
+    res.status(500).json({ error: "Failed to load bookings data" })
+  }
+})
+
+// Booking details API
+router.get("/api/booking/:id", isAdmin, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate("user", "name phone address")
+      .populate("mechanic", "name phone")
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" })
+    }
+
+    // Build list of available mechanics for assignment
+    let availableMechanics = []
+    try {
+      const approvedMechanicUsers = await User.find(
+        { role: "mechanic", isApproved: true },
+        "_id name"
+      )
+
+      const approvedIds = approvedMechanicUsers.map((u) => u._id)
+
+      const profiles = await MechanicProfile.find({
+        user: { $in: approvedIds },
+        availability: true,
+        ...(booking.problemCategory
+          ? { specialization: booking.problemCategory }
+          : {}),
+      })
+        .select("user specialization experience")
+        .populate("user", "name")
+
+      availableMechanics = profiles.map((p) => ({
+        _id: p.user._id,
+        name: p.user.name,
+        specialization: p.specialization || [],
+        experience: p.experience || 0,
+      }))
+    } catch (e) {
+      console.error("Failed to load available mechanics:", e)
+      availableMechanics = []
+    }
+
+    res.json({
+      booking,
+      availableMechanics,
+    })
+  } catch (error) {
+    console.error("Booking details API error:", error)
+    res.status(500).json({ error: "Failed to load booking details" })
+  }
+})
+
+// Mechanics API
+router.get("/api/mechanics", isAdmin, async (req, res) => {
+  try {
+    const mechanics = await User.find({ role: "mechanic" }).sort({ isApproved: 1, createdAt: -1 });
+
+    const pendingUsers = await User.find({ role: "mechanic", isApproved: false });
+    const approvedUsers = await User.find({ role: "mechanic", isApproved: true });
+
+    const pendingMechanics = await MechanicProfile.find({ user: { $in: pendingUsers.map(u => u._id) } }).populate("user", "name email phone");
+    const approvedMechanics = await MechanicProfile.find({ user: { $in: approvedUsers.map(u => u._id) } }).populate("user", "name email phone");
+
+    // Add job count for approved mechanics
+    const approvedMechanicIds = approvedMechanics.map(m => m.user._id);
+    const jobCounts = await Booking.aggregate([
+      { $match: { mechanic: { $in: approvedMechanicIds } } },
+      { $group: { _id: "$mechanic", count: { $sum: 1 } } }
+    ]);
+
+    const jobCountMap = {};
+    jobCounts.forEach(item => {
+      jobCountMap[item._id.toString()] = item.count;
+    });
+
+    // Add jobCount to each approved mechanic
+    const approvedMechanicsWithJobCount = approvedMechanics.map(mechanic => ({
+      ...mechanic.toObject(),
+      jobCount: jobCountMap[mechanic.user._id.toString()] || 0
+    }));
+
+    res.json({
+      mechanics,
+      pendingMechanics,
+      approvedMechanics: approvedMechanicsWithJobCount,
+    });
+  } catch (error) {
+    console.error("Mechanics API error:", error);
+    res.status(500).json({ error: "Failed to load mechanics data" });
+  }
+});
+
+// Mechanic details API
+router.get("/api/mechanic/:id", isAdmin, async (req, res) => {
+  try {
+    const mechanic = await User.findById(req.params.id)
+
+    if (!mechanic) {
+      return res.status(404).json({ error: "Mechanic not found" })
+    }
+
+    // Get mechanic profile
+    const profile = await MechanicProfile.findOne({ user: mechanic._id }).populate("reviews.user", "name")
+
+    // Get mechanic's bookings
+    const bookings = await Booking.find({ mechanic: mechanic._id }).populate("user", "name").sort({ createdAt: -1 })
+
+    res.json({
+      mechanic,
+      profile,
+      bookings,
+    })
+  } catch (error) {
+    console.error("Mechanic details API error:", error)
+    res.status(500).json({ error: "Failed to load mechanic details" })
+  }
+})
+
+// Payments API
+router.get("/api/payments", isAdmin, async (req, res) => {
+  try {
+    // Get completed booking payments
+    const payments = await Booking.find({
+      status: "completed",
+      "payment.amount": { $gt: 0 },
+    })
+      .populate("user", "name")
+      .populate("mechanic", "name")
+      .sort({ updatedAt: -1 });
+
+    // Payment status counts
+    const [completedPaymentsCount, pendingPaymentsCount] = await Promise.all([
+      Booking.countDocuments({
+        status: "completed",
+        "payment.status": "completed",
+        "payment.amount": { $gt: 0 },
+      }),
+      Booking.countDocuments({
+        status: "completed",
+        "payment.status": "pending",
+        "payment.amount": { $gt: 0 },
+      }),
+    ]);
+
+    // Get active subscriptions with payment info
+    const subscriptions = await Subscription.find({
+      status: "active",
+      amount: { $gt: 0 },
+    })
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
+    // Calculate total booking revenue
+    const bookingRevenue = await Booking.aggregate([
+      { $match: { status: "completed", "payment.status": "completed" } },
+      { $group: { _id: null, total: { $sum: "$payment.amount" } } },
+    ]);
+
+    const bookingTotal = bookingRevenue.length > 0 ? bookingRevenue[0].total : 0;
+
+    // Calculate total subscription revenue
+    const subscriptionRevenue = await Subscription.aggregate([
+      { $match: { status: "active" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+
+    const subscriptionTotal = subscriptionRevenue.length > 0 ? subscriptionRevenue[0].total : 0;
+
+    const totalAmount = (bookingTotal + subscriptionTotal).toFixed(2);
+
+    res.json({
+      payments,
+      subscriptions,
+      totalAmount,
+      bookingTotal,
+      subscriptionTotal,
+      completedPaymentsCount,
+      pendingPaymentsCount,
+    });
+  } catch (error) {
+    console.error("Payments API error:", error);
+    res.status(500).json({ error: "Failed to load payments data" });
+  }
+});
+
+// Subscriptions API
+router.get("/api/subscriptions", isAdmin, async (req, res) => {
+  try {
+    const subscriptions = await Subscription.find()
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 })
+
+    res.json({ subscriptions })
+  } catch (error) {
+    console.error("Subscriptions API error:", error)
+    res.status(500).json({ error: "Failed to load subscriptions data" })
+  }
+});
+
+// Premium users API
+router.get("/api/premium-users", isAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ isPremium: true }).sort({ createdAt: -1 })
+
+    res.json({ users })
+  } catch (error) {
+    console.error("Premium users API error:", error)
+    res.status(500).json({ error: "Failed to load premium users data" })
   }
 })
 

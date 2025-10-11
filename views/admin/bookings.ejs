@@ -82,7 +82,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0"><%= bookingStats.total %></h3>
+              <h3 class="mb-0" id="totalBookings">0</h3>
               <p class="mb-0 text-white">Total Bookings</p>
             </div>
             <div class="stats-icon">
@@ -97,7 +97,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0"><%= bookingStats.active %></h3>
+              <h3 class="mb-0" id="activeBookings">0</h3>
               <p class="mb-0 text-white">Active Bookings</p>
             </div>
             <div class="stats-icon">
@@ -112,7 +112,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0"><%= bookingStats.completed %></h3>
+              <h3 class="mb-0" id="completedBookings">0</h3>
               <p class="mb-0 text-white">Completed</p>
             </div>
             <div class="stats-icon">
@@ -127,7 +127,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h3 class="mb-0"><%= bookingStats.cancelled %></h3>
+              <h3 class="mb-0" id="cancelledBookings">0</h3>
               <p class="mb-0 text-white">Cancelled</p>
             </div>
             <div class="stats-icon">
@@ -144,124 +144,17 @@
       <div class="card border-0 shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
           <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>All Bookings</h5>
-          <span class="badge bg-primary rounded-pill"><%= bookings.length %> Bookings</span>
+          <span class="badge bg-primary rounded-pill" id="bookingCount">0 Bookings</span>
         </div>
         <div class="card-body p-0">
-          <% if (bookings.length === 0) { %>
+          <div id="bookingsContent">
             <div class="text-center py-5">
-              <img src="/images/empty-bookings.png" alt="No Bookings" class="img-fluid mb-3" style="max-width: 200px;">
-              <h5>No bookings found</h5>
-              <p class="text-muted">There are no bookings in the system yet.</p>
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2">Loading bookings...</p>
             </div>
-          <% } else { %>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle" id="bookingsTable">
-                <thead class="table-light">
-                  <tr>
-                    <th>ID</th>
-                    <th>Date</th>
-                    <th>User</th>
-                    <th>Mechanic</th>
-                    <th>Problem</th>
-                    <th>Status</th>
-                    <th>Payment</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% bookings.forEach(booking => { %>
-                    <tr 
-                      data-status="<%= booking.status %>" 
-                      data-category="<%= booking.problemCategory %>" 
-                      data-date="<%= new Date(booking.createdAt).toISOString() %>"
-                    >
-                      <td><small class="text-muted"><%= booking._id.toString().substring(0, 8) %>...</small></td>
-                      <td>
-                        <div class="d-flex flex-column">
-                          <span><%= new Date(booking.createdAt).toLocaleDateString() %></span>
-                          <small class="text-muted"><%= new Date(booking.createdAt).toLocaleTimeString() %></small>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <div class="avatar-circle bg-primary text-white me-2">
-                            <%= booking.user.name.charAt(0).toUpperCase() %>
-                          </div>
-                          <span><%= booking.user.name %></span>
-                        </div>
-                      </td>
-                      <td>
-                        <% if (booking.mechanic) { %>
-                          <div class="d-flex align-items-center">
-                            <div class="avatar-circle bg-success text-white me-2">
-                              <%= booking.mechanic.name.charAt(0).toUpperCase() %>
-                            </div>
-                            <span><%= booking.mechanic.name %></span>
-                          </div>
-                        <% } else { %>
-                          <span class="text-muted">Not assigned</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <span class="d-inline-block text-truncate" style="max-width: 150px;" title="<%= booking.problemCategory %>">
-                          <%= booking.problemCategory %>
-                        </span>
-                      </td>
-                      <td>
-                        <span class="booking-status status-<%= booking.status %>">
-                          <%= booking.status %>
-                        </span>
-                      </td>
-                      <td>
-                        <% if (booking.status === 'completed') { %>
-                          <% if (booking.payment && booking.payment.status === 'completed') { %>
-                            <span class="badge bg-success">Paid</span>
-                            <span class="d-block text-success fw-bold mt-1">$<%= booking.payment.amount.toFixed(2) %></span>
-                          <% } else { %>
-                            <span class="badge bg-warning text-dark">Pending</span>
-                          <% } %>
-                        <% } else { %>
-                          <span class="badge bg-secondary">N/A</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <div class="btn-group">
-                          <a href="/admin/booking/<%= booking._id %>" class="btn btn-sm btn-primary">
-                            <i class="fas fa-eye"></i> View
-                          </a>
-                          <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteBookingModal<%= booking._id %>">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                        
-                        <!-- Delete Booking Modal -->
-                        <div class="modal fade" id="deleteBookingModal<%= booking._id %>" tabindex="-1" aria-labelledby="deleteBookingModalLabel<%= booking._id %>" aria-hidden="true">
-                          <div class="modal-dialog">
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title" id="deleteBookingModalLabel<%= booking._id %>">Delete Booking</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                              </div>
-                              <div class="modal-body">
-                                <p>Are you sure you want to delete this booking?</p>
-                                <p class="text-danger">This action cannot be undone. All associated data will be deleted.</p>
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <form action="/admin/booking/<%= booking._id %>/delete" method="POST">
-                                  <button type="submit" class="btn btn-danger">Delete Booking</button>
-                                </form>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
-          <% } %>
+          </div>
         </div>
       </div>
     </div>
@@ -300,9 +193,160 @@
     const dateFromFilter = document.getElementById('dateFrom');
     const dateToFilter = document.getElementById('dateTo');
     const applyFiltersBtn = document.getElementById('applyFilters');
-    const bookingsTable = document.getElementById('bookingsTable');
-    const tableRows = bookingsTable ? bookingsTable.querySelectorAll('tbody tr') : [];
-    
+
+    let bookingsData = [];
+    let categoryChart, trendChart;
+
+    // Fetch bookings data from API
+    async function fetchBookings() {
+      try {
+        const response = await fetch('/admin/api/bookings');
+        const data = await response.json();
+
+        if (data.bookings) {
+          bookingsData = data.bookings;
+          renderBookings(data.bookings);
+          updateStats(data.bookingStats);
+          initializeCharts(data.bookings, data.bookingByCategory, data.bookingTrends);
+        } else {
+          console.error('Failed to fetch bookings:', data.error);
+          document.getElementById('bookingsContent').innerHTML = `
+            <div class="text-center py-5">
+              <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+              <h5>Failed to load bookings</h5>
+              <p class="text-muted">Please try refreshing the page.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+        document.getElementById('bookingsContent').innerHTML = `
+          <div class="text-center py-5">
+            <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+            <h5>Error loading bookings</h5>
+            <p class="text-muted">Please check your connection and try again.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Update stats cards
+    function updateStats(stats) {
+      document.getElementById('totalBookings').textContent = stats.total || 0;
+      document.getElementById('activeBookings').textContent = stats.active || 0;
+      document.getElementById('completedBookings').textContent = stats.completed || 0;
+      document.getElementById('cancelledBookings').textContent = stats.cancelled || 0;
+    }
+
+    // Render bookings table
+    function renderBookings(bookings) {
+      const bookingCount = document.getElementById('bookingCount');
+      bookingCount.textContent = `${bookings.length} Bookings`;
+
+      if (bookings.length === 0) {
+        document.getElementById('bookingsContent').innerHTML = `
+          <div class="text-center py-5">
+            <img src="/images/empty-bookings.png" alt="No Bookings" class="img-fluid mb-3" style="max-width: 200px;">
+            <h5>No bookings found</h5>
+            <p class="text-muted">There are no bookings in the system yet.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const tableHTML = `
+        <div class="table-responsive">
+          <table class="table table-hover align-middle" id="bookingsTable">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>User</th>
+                <th>Mechanic</th>
+                <th>Problem</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bookings.map(booking => `
+                <tr data-status="${booking.status}" data-category="${booking.problemCategory}" data-date="${new Date(booking.createdAt).toISOString()}">
+                  <td><small class="text-muted">${booking._id.toString().substring(0, 8)}...</small></td>
+                  <td>
+                    <div class="d-flex flex-column">
+                      <span>${new Date(booking.createdAt).toLocaleDateString()}</span>
+                      <small class="text-muted">${new Date(booking.createdAt).toLocaleTimeString()}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar-circle bg-primary text-white me-2">
+                        ${booking.user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span>${booking.user.name}</span>
+                    </div>
+                  </td>
+                  <td>
+                    ${booking.mechanic ? `
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-circle bg-success text-white me-2">
+                          ${booking.mechanic.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span>${booking.mechanic.name}</span>
+                      </div>
+                    ` : '<span class="text-muted">Not assigned</span>'}
+                  </td>
+                  <td>
+                    <span class="d-inline-block text-truncate" style="max-width: 150px;" title="${booking.problemCategory}">
+                      ${booking.problemCategory}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="booking-status status-${booking.status}">
+                      ${booking.status}
+                    </span>
+                  </td>
+                  <td>
+                    ${booking.status === 'completed' ? (
+                      booking.payment && booking.payment.status === 'completed' ? `
+                        <span class="badge bg-success">Paid</span>
+                        <span class="d-block text-success fw-bold mt-1">$${booking.payment.amount.toFixed(2)}</span>
+                      ` : '<span class="badge bg-warning text-dark">Pending</span>'
+                    ) : '<span class="badge bg-secondary">N/A</span>'}
+                  </td>
+                  <td>
+                    <div class="btn-group">
+                      <a href="/admin/booking/${booking._id}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i> View
+                      </a>
+                      <button type="button" class="btn btn-sm btn-danger" onclick="deleteBooking('${booking._id}')">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById('bookingsContent').innerHTML = tableHTML;
+    }
+
+    // Delete booking function
+    window.deleteBooking = function(bookingId) {
+      if (confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/booking/${bookingId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+      }
+    };
+
     // Apply filters function
     function applyFilters() {
       const searchTerm = searchInput.value.toLowerCase();
@@ -310,17 +354,19 @@
       const categoryValue = categoryFilter.value;
       const dateFromValue = dateFromFilter.value ? new Date(dateFromFilter.value) : null;
       const dateToValue = dateToFilter.value ? new Date(dateToFilter.value) : null;
-      
+
+      const tableRows = document.querySelectorAll('#bookingsTable tbody tr');
+
       tableRows.forEach(row => {
         const status = row.getAttribute('data-status');
         const category = row.getAttribute('data-category');
         const date = new Date(row.getAttribute('data-date'));
         const rowText = row.textContent.toLowerCase();
-        
+
         const statusMatch = statusValue === 'all' || status === statusValue;
         const categoryMatch = categoryValue === 'all' || category === categoryValue;
         const searchMatch = !searchTerm || rowText.includes(searchTerm);
-        
+
         let dateMatch = true;
         if (dateFromValue && dateToValue) {
           dateMatch = date >= dateFromValue && date <= dateToValue;
@@ -329,7 +375,7 @@
         } else if (dateToValue) {
           dateMatch = date <= dateToValue;
         }
-        
+
         if (statusMatch && categoryMatch && searchMatch && dateMatch) {
           row.style.display = '';
         } else {
@@ -337,16 +383,101 @@
         }
       });
     }
-    
+
+    // Initialize charts
+    function initializeCharts(bookings, bookingByCategory, bookingTrends) {
+      // Category chart
+      if (document.getElementById('categoryChart') && bookingByCategory) {
+        const categoryLabels = bookingByCategory.map(item => item._id || 'Uncategorized');
+        const categoryData = bookingByCategory.map(item => item.count);
+
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        if (categoryChart) {
+          categoryChart.destroy();
+        }
+        categoryChart = new Chart(categoryCtx, {
+          type: 'doughnut',
+          data: {
+            labels: categoryLabels,
+            datasets: [{
+              data: categoryData,
+              backgroundColor: [
+                '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0',
+                '#4895ef', '#560bad', '#f3722c', '#f8961e', '#90be6d'
+              ],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  boxWidth: 12,
+                  padding: 15
+                }
+              }
+            },
+            cutout: '70%'
+          }
+        });
+      }
+
+      // Trend chart
+      if (document.getElementById('trendChart') && bookingTrends) {
+        const trendLabels = bookingTrends.map(item => item._id);
+        const trendData = bookingTrends.map(item => item.count);
+
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        if (trendChart) {
+          trendChart.destroy();
+        }
+        trendChart = new Chart(trendCtx, {
+          type: 'line',
+          data: {
+            labels: trendLabels,
+            datasets: [{
+              label: 'Bookings',
+              data: trendData,
+              borderColor: '#4361ee',
+              backgroundColor: 'rgba(67, 97, 238, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
     // Event listeners
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener('click', applyFilters);
     }
-    
+
     if (searchButton) {
       searchButton.addEventListener('click', applyFilters);
     }
-    
+
     if (searchInput) {
       searchInput.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
@@ -354,118 +485,9 @@
         }
       });
     }
-    
-    // Initialize charts
-    if (document.getElementById('categoryChart')) {
-      // Prepare data for category chart
-      const categories = {};
-      tableRows.forEach(row => {
-        const category = row.getAttribute('data-category');
-        if (!categories[category]) {
-          categories[category] = 0;
-        }
-        categories[category]++;
-      });
-      
-      const categoryLabels = Object.keys(categories);
-      const categoryData = Object.values(categories);
-      
-      const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-      new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: {
-          labels: categoryLabels,
-          datasets: [{
-            data: categoryData,
-            backgroundColor: [
-              '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0',
-              '#4895ef', '#560bad', '#f3722c', '#f8961e', '#90be6d'
-            ],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 12,
-                padding: 15
-              }
-            }
-          },
-          cutout: '70%'
-        }
-      });
-    }
-    
-    if (document.getElementById('trendChart')) {
-      // Prepare data for trend chart (last 6 months)
-      const months = [];
-      const bookingCounts = [];
-      
-      // Get last 6 months
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        months.push(date.toLocaleString('default', { month: 'short' }));
-        bookingCounts.push(0); // Initialize with 0
-      }
-      
-      // Calculate bookings for each month
-      tableRows.forEach(row => {
-        const date = new Date(row.getAttribute('data-date'));
-        
-        // Check if date is within last 6 months
-        const currentDate = new Date();
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
-        
-        if (date >= sixMonthsAgo) {
-          const monthIndex = currentDate.getMonth() - date.getMonth();
-          const normalizedIndex = monthIndex < 0 ? monthIndex + 12 : monthIndex;
-          if (normalizedIndex < 6) {
-            bookingCounts[5 - normalizedIndex]++;
-          }
-        }
-      });
-      
-      const trendCtx = document.getElementById('trendChart').getContext('2d');
-      new Chart(trendCtx, {
-        type: 'line',
-        data: {
-          labels: months,
-          datasets: [{
-            label: 'Bookings',
-            data: bookingCounts,
-            borderColor: '#4361ee',
-            backgroundColor: 'rgba(67, 97, 238, 0.1)',
-            borderWidth: 2,
-            tension: 0.3,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                precision: 0
-              }
-            }
-          }
-        }
-      });
-    }
+
+    // Load data on page load
+    fetchBookings();
   });
 </script>
 

@@ -19,329 +19,77 @@
 
   <div class="row">
     <div class="col-lg-8">
-      <div class="card border-0 shadow-sm mb-4">
-        <div
-          class="card-header bg-white d-flex justify-content-between align-items-center"
-        >
-          <h5 class="mb-0">
-            <i class="fas fa-info-circle text-primary me-2"></i>Booking
-            Information
-          </h5>
-          <span class="booking-status status-<%= booking.status %>">
-            <%= booking.status %>
-          </span>
-        </div>
-        <div class="card-body">
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <p class="text-muted mb-1">Booking ID</p>
-              <p class="fw-bold mb-3"><%= booking._id %></p>
-
-              <p class="text-muted mb-1">Date & Time</p>
-              <p class="fw-bold mb-3">
-                <%= new Date(booking.createdAt).toLocaleString() %>
-              </p>
-
-              <p class="text-muted mb-1">Problem Category</p>
-              <p class="fw-bold mb-3"><%= booking.problemCategory %></p>
-
-              <p class="text-muted mb-1">Status</p>
-              <p class="fw-bold mb-0"><%= booking.status %></p>
+      <div id="bookingInfoCard">
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
             </div>
-            <div class="col-md-6">
-              <p class="text-muted mb-1">Location</p>
-              <p class="fw-bold mb-3"><%= booking.location.address %></p>
-
-              <% if (booking.mechanic) { %>
-              <p class="text-muted mb-1">Mechanic</p>
-              <div class="d-flex align-items-center mb-3">
-                <div class="avatar-circle bg-success text-white me-2">
-                  <%= booking.mechanic.name.charAt(0).toUpperCase() %>
-                </div>
-                <div>
-                  <p class="fw-bold mb-0"><%= booking.mechanic.name %></p>
-                  <p class="small text-muted mb-0">
-                    <%= booking.mechanic.phone %>
-                  </p>
-                </div>
-              </div>
-              <% } else { %>
-              <p class="text-muted mb-1">Mechanic</p>
-              <p class="fw-bold mb-3">Not assigned yet</p>
-              <% } %> <% if (booking.status === 'completed' && booking.payment)
-              { %>
-              <p class="text-muted mb-1">Payment Status</p>
-              <p class="fw-bold mb-0">
-                <% if (booking.payment.status === 'completed') { %>
-                <span class="text-success">Paid</span>
-                <% } else { %>
-                <span class="text-warning">Pending Payment</span>
-                <% } %>
-              </p>
-              <% } %>
-            </div>
-          </div>
-
-          <div class="mb-4">
-            <h6 class="fw-bold">Description</h6>
-            <p class="mb-0"><%= booking.description %></p>
-          </div>
-
-          <% if (booking.images && booking.images.length > 0) { %>
-          <div class="mb-4">
-            <h6 class="fw-bold">Images</h6>
-            <div class="row g-3">
-              <% booking.images.forEach(image => { %>
-              <div class="col-md-4 col-6">
-                <a href="<%= image %>" target="_blank" class="image-popup">
-                  <img
-                    src="<%= image %>"
-                    alt="Booking Image"
-                    class="img-fluid rounded shadow-sm"
-                    style="object-fit: cover; height: 150px; width: 100%"
-                  />
-                </a>
-              </div>
-              <% }) %>
-            </div>
-          </div>
-          <% } %> <% if (booking.status === 'completed' && booking.notes) { %>
-          <div class="mb-4">
-            <h6 class="fw-bold">Service Notes</h6>
-            <div class="alert alert-light"><%= booking.notes %></div>
-          </div>
-          <% } %> <% if (booking.status === 'completed' && booking.payment) { %>
-          <div class="mb-4">
-            <h6 class="fw-bold">Payment Details</h6>
-            <div class="card bg-light border-0">
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-6">
-                    <p class="text-muted mb-1">Amount</p>
-                    <p class="fw-bold text-success mb-3">
-                      $<%= booking.payment.amount.toFixed(2) %>
-                    </p>
-                  </div>
-                  <div class="col-md-6">
-                    <p class="text-muted mb-1">Status</p>
-                    <p class="fw-bold mb-3">
-                      <% if (booking.payment.status === 'completed') { %>
-                      <span class="text-success">Completed</span>
-                      <% } else { %>
-                      <span class="text-warning">Pending</span>
-                      <% } %>
-                    </p>
-                  </div>
-                </div>
-
-                <% if (booking.payment.status === 'completed') { %>
-                <p class="text-muted mb-1">Transaction ID</p>
-                <p class="fw-bold mb-0"><%= booking.payment.transactionId %></p>
-                <% } %>
-              </div>
-            </div>
-          </div>
-          <% } %>
-
-          <div class="d-flex flex-wrap gap-2 mt-4">
-            <a href="/admin/bookings" class="btn btn-outline-secondary">
-              <i class="fas fa-arrow-left me-2"></i> Back to Bookings
-            </a>
-
-            <% if (booking.status === 'pending' && !booking.mechanic) { %>
-            <button
-              type="button"
-              class="btn btn-primary"
-              data-bs-toggle="modal"
-              data-bs-target="#assignMechanicModal"
-            >
-              <i class="fas fa-user-plus me-2"></i> Assign Mechanic
-            </button>
-            <% } %>
-
-            <button
-              type="button"
-              class="btn btn-danger"
-              data-bs-toggle="modal"
-              data-bs-target="#deleteBookingModal"
-            >
-              <i class="fas fa-trash me-2"></i> Delete Booking
-            </button>
+            <p class="mt-2">Loading booking details...</p>
           </div>
         </div>
       </div>
 
-      <% if (booking.status === 'in-progress' && booking.mechanic) { %>
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white">
-          <h5 class="mb-0">
-            <i class="fas fa-map-marker-alt text-primary me-2"></i>Tracking
-            Information
-          </h5>
-        </div>
-        <div class="card-body p-0">
-          <div id="tracking-map" style="height: 300px"></div>
+      <div id="trackingInfoCard" style="display: none;">
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">
+              <i class="fas fa-map-marker-alt text-primary me-2"></i>Tracking Information
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div id="tracking-map" style="height: 300px"></div>
+          </div>
         </div>
       </div>
-      <% } %>
     </div>
 
     <div class="col-lg-4">
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white">
-          <h5 class="mb-0">
-            <i class="fas fa-user text-primary me-2"></i>Customer Information
-          </h5>
-        </div>
-        <div class="card-body">
-          <div class="text-center mb-4">
-            <div class="avatar-circle-large bg-primary text-white mx-auto mb-3">
-              <%= booking.user.name.charAt(0).toUpperCase() %>
+      <div id="customerInfoCard">
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
             </div>
-            <h5 class="mb-1"><%= booking.user.name %></h5>
-            <p class="text-muted mb-0"><%= booking.user.email %></p>
-          </div>
-
-          <div class="mb-3">
-            <p class="text-muted mb-1">Phone</p>
-            <p class="fw-bold mb-3"><%= booking.user.phone %></p>
-
-            <p class="text-muted mb-1">Address</p>
-            <p class="fw-bold mb-0"><%= booking.user.address %></p>
-          </div>
-
-          <div class="d-grid gap-2">
-            <a
-              href="/admin/user/<%= booking.user._id %>"
-              class="btn btn-outline-primary"
-            >
-              <i class="fas fa-user me-2"></i> View User Profile
-            </a>
+            <p class="mt-2">Loading customer information...</p>
           </div>
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white">
-          <h5 class="mb-0">
-            <i class="fas fa-clipboard-list text-primary me-2"></i>Booking
-            Timeline
-          </h5>
-        </div>
-        <div class="card-body p-0">
-          <ul class="timeline">
-            <li class="timeline-item">
-              <div class="timeline-marker bg-success"></div>
-              <div class="timeline-content p-3">
-                <h6 class="mb-1">Booking Created</h6>
-                <p class="small text-muted mb-0">
-                  <%= new Date(booking.createdAt).toLocaleString() %>
-                </p>
-              </div>
-            </li>
-
-            <% if (booking.status !== 'pending' || booking.mechanic) { %>
-            <li class="timeline-item">
-              <div
-                class="timeline-marker <%= booking.mechanic ? 'bg-success' : 'bg-secondary' %>"
-              ></div>
-              <div class="timeline-content p-3">
-                <h6 class="mb-1">Mechanic Assigned</h6>
-                <% if (booking.mechanic) { %>
-                <p class="small mb-1"><%= booking.mechanic.name %></p>
-                <p class="small text-muted mb-0">
-                  Assigned on <%= new Date(booking.updatedAt).toLocaleString()
-                  %>
-                </p>
-                <% } else { %>
-                <p class="small text-muted mb-0">
-                  Waiting for mechanic assignment
-                </p>
-                <% } %>
-              </div>
-            </li>
-            <% } %> <% if (booking.status === 'accepted' || booking.status ===
-            'in-progress' || booking.status === 'completed') { %>
-            <li class="timeline-item">
-              <div
-                class="timeline-marker <%= booking.status !== 'pending' ? 'bg-success' : 'bg-secondary' %>"
-              ></div>
-              <div class="timeline-content p-3">
-                <h6 class="mb-1">Booking Accepted</h6>
-                <p class="small text-muted mb-0">
-                  Mechanic accepted the booking
-                </p>
-              </div>
-            </li>
-            <% } %> <% if (booking.status === 'in-progress' || booking.status
-            === 'completed') { %>
-            <li class="timeline-item">
-              <div
-                class="timeline-marker <%= booking.status === 'in-progress' || booking.status === 'completed' ? 'bg-success' : 'bg-secondary' %>"
-              ></div>
-              <div class="timeline-content p-3">
-                <h6 class="mb-1">Service Started</h6>
-                <p class="small text-muted mb-0">
-                  Mechanic started working on the bike
-                </p>
-              </div>
-            </li>
-            <% } %> <% if (booking.status === 'completed') { %>
-            <li class="timeline-item">
-              <div
-                class="timeline-marker <%= booking.status === 'completed' ? 'bg-success' : 'bg-secondary' %>"
-              ></div>
-              <div class="timeline-content p-3">
-                <h6 class="mb-1">Service Completed</h6>
-                <p class="small text-muted mb-0">
-                  Service has been completed successfully
-                </p>
-              </div>
-            </li>
-
-            <li class="timeline-item">
-              <div
-                class="timeline-marker <%= booking.payment && booking.payment.status === 'completed' ? 'bg-success' : 'bg-warning' %>"
-              ></div>
-              <div class="timeline-content p-3">
-                <h6 class="mb-1">Payment</h6>
-                <% if (booking.payment && booking.payment.status ===
-                'completed') { %>
-                <p class="small text-success mb-0">Payment completed</p>
-                <% } else { %>
-                <p class="small text-warning mb-0">Payment pending</p>
-                <% } %>
-              </div>
-            </li>
-            <% } %> <% if (booking.status === 'cancelled') { %>
-            <li class="timeline-item">
-              <div class="timeline-marker bg-danger"></div>
-              <div class="timeline-content p-3">
-                <h6 class="mb-1">Booking Cancelled</h6>
-                <p class="small text-muted mb-0">Booking was cancelled</p>
-              </div>
-            </li>
-            <% } %>
-          </ul>
+      <div id="timelineCard">
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">
+              <i class="fas fa-clipboard-list text-primary me-2"></i>Booking Timeline
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <ul class="timeline">
+              <li class="timeline-item text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading timeline...</p>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white">
-          <h5 class="mb-0">
-            <i class="fas fa-map-marker-alt text-primary me-2"></i>Booking
-            Location
-          </h5>
-        </div>
-        <div class="card-body p-0">
-          <div id="booking-map" style="height: 250px"
-               data-lat="<%= (booking.location && booking.location.coordinates && booking.location.coordinates[1]) || 0 %>"
-               data-lng="<%= (booking.location && booking.location.coordinates && booking.location.coordinates[0]) || 0 %>"></div>
-          <div class="p-3">
-            <p class="mb-0">
-              <i class="fas fa-map-marker-alt text-danger me-2"></i><%=
-              booking.location.address %>
-            </p>
+      <div id="bookingLocationCard">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">
+              <i class="fas fa-map-marker-alt text-primary me-2"></i>Booking Location
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div id="booking-map" style="height: 250px"></div>
+            <div class="p-3">
+              <p class="mb-0 text-muted">
+                <i class="fas fa-map-marker-alt text-danger me-2"></i>Loading location...
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -370,10 +118,7 @@
           aria-label="Close"
         ></button>
       </div>
-      <form
-        action="/admin/booking/<%= booking._id %>/assign-mechanic"
-        method="POST"
-      >
+      <form id="assignMechanicForm" method="POST">
         <div class="modal-body">
           <div class="mb-3">
             <label for="mechanicId" class="form-label">Select Mechanic</label>
@@ -384,15 +129,6 @@
               required
             >
               <option value="" selected disabled>Choose a mechanic...</option>
-              <% if (!availableMechanics || availableMechanics.length === 0) { %>
-              <option value="" disabled>No matching mechanics available</option>
-              <% } %>
-              <% (availableMechanics || []).forEach(mechanic => { %>
-              <option value="<%= mechanic._id %>">
-                <%= mechanic.name %> - <%= mechanic?.specialization?.join(', ') %>
-                - <%= mechanic.experience %> years
-              </option>
-              <% }) %>
             </select>
           </div>
           <div class="alert alert-info">
@@ -450,7 +186,7 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           Cancel
         </button>
-        <form action="/admin/booking/<%= booking._id %>/delete" method="POST">
+        <form id="deleteBookingForm" method="POST">
           <button type="submit" class="btn btn-danger">Delete Booking</button>
         </form>
       </div>
@@ -503,32 +239,386 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Initialize booking location map
-    const bookingMapEl = document.getElementById('booking-map');
-    if (bookingMapEl) {
-      const bookingLat = parseFloat(bookingMapEl.getAttribute('data-lat')) || 0;
-      const bookingLng = parseFloat(bookingMapEl.getAttribute('data-lng')) || 0;
-      const bookingMap = L.map('booking-map').setView([bookingLat, bookingLng], 13);
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookingId = window.location.pathname.split('/').pop();
+
+    let bookingMap, trackingMap;
+
+    // Fetch booking details from API
+    async function fetchBookingDetails() {
+      try {
+        const response = await fetch(`/admin/api/booking/${bookingId}`);
+        const data = await response.json();
+
+        if (data.booking) {
+          renderBookingInfo(data.booking);
+          renderCustomerInfo(data.booking.user);
+          renderTimeline(data.booking);
+          initializeLocationMap(data.booking.location);
+          if (data.booking.status === 'in-progress' && data.booking.mechanic) {
+            document.getElementById('trackingInfoCard').style.display = 'block';
+            initializeTrackingMap(data.booking.location);
+          }
+          setupModals(data.booking, data.availableMechanics || []);
+        } else {
+          console.error('Failed to fetch booking details:', data.message);
+          const errorHTML = `
+            <div class="card border-0 shadow-sm">
+              <div class="card-body text-center p-4">
+                <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                <h5>Failed to load booking details</h5>
+                <p class="text-muted">Please try refreshing the page.</p>
+              </div>
+            </div>
+          `;
+          document.getElementById('bookingInfoCard').innerHTML = errorHTML;
+          document.getElementById('customerInfoCard').innerHTML = errorHTML;
+          document.getElementById('timelineCard').innerHTML = errorHTML;
+        }
+      } catch (error) {
+        console.error('Error fetching booking details:', error);
+        const errorHTML = `
+          <div class="card border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+              <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+              <h5>Error loading booking details</h5>
+              <p class="text-muted">Please check your connection and try again.</p>
+            </div>
+          </div>
+        `;
+        document.getElementById('bookingInfoCard').innerHTML = errorHTML;
+        document.getElementById('customerInfoCard').innerHTML = errorHTML;
+        document.getElementById('timelineCard').innerHTML = errorHTML;
+      }
+    }
+
+    // Render booking information
+    function renderBookingInfo(booking) {
+      const imagesHTML = booking.images && booking.images.length > 0 ? `
+        <div class="mb-4">
+          <h6 class="fw-bold">Images</h6>
+          <div class="row g-3">
+            ${booking.images.map(image => `
+              <div class="col-md-4 col-6">
+                <a href="${image}" target="_blank" class="image-popup">
+                  <img src="${image}" alt="Booking Image" class="img-fluid rounded shadow-sm" style="object-fit: cover; height: 150px; width: 100%" />
+                </a>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      const serviceNotesHTML = booking.status === 'completed' && booking.notes ? `
+        <div class="mb-4">
+          <h6 class="fw-bold">Service Notes</h6>
+          <div class="alert alert-light">${booking.notes}</div>
+        </div>
+      ` : '';
+
+      const paymentDetailsHTML = booking.status === 'completed' && booking.payment ? `
+        <div class="mb-4">
+          <h6 class="fw-bold">Payment Details</h6>
+          <div class="card bg-light border-0">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="text-muted mb-1">Amount</p>
+                  <p class="fw-bold text-success mb-3">$${booking.payment.amount.toFixed(2)}</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="text-muted mb-1">Status</p>
+                  <p class="fw-bold mb-3">${booking.payment.status === 'completed' ? '<span class="text-success">Completed</span>' : '<span class="text-warning">Pending</span>'}</p>
+                </div>
+              </div>
+              ${booking.payment.status === 'completed' ? `
+                <p class="text-muted mb-1">Transaction ID</p>
+                <p class="fw-bold mb-0">${booking.payment.transactionId}</p>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      ` : '';
+
+      const assignButtonHTML = booking.status === 'pending' && !booking.mechanic ? `
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assignMechanicModal">
+          <i class="fas fa-user-plus me-2"></i> Assign Mechanic
+        </button>
+      ` : '';
+
+      const bookingInfoHTML = `
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="fas fa-info-circle text-primary me-2"></i>Booking Information
+            </h5>
+            <span class="booking-status status-${booking.status}">${booking.status}</span>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <p class="text-muted mb-1">Booking ID</p>
+                <p class="fw-bold mb-3">${booking._id}</p>
+                <p class="text-muted mb-1">Date & Time</p>
+                <p class="fw-bold mb-3">${new Date(booking.createdAt).toLocaleString()}</p>
+                <p class="text-muted mb-1">Problem Category</p>
+                <p class="fw-bold mb-3">${booking.problemCategory}</p>
+                <p class="text-muted mb-1">Status</p>
+                <p class="fw-bold mb-0">${booking.status}</p>
+              </div>
+              <div class="col-md-6">
+                <p class="text-muted mb-1">Location</p>
+                <p class="fw-bold mb-3">${booking.location.address}</p>
+                ${booking.mechanic ? `
+                  <p class="text-muted mb-1">Mechanic</p>
+                  <div class="d-flex align-items-center mb-3">
+                    <div class="avatar-circle bg-success text-white me-2">${booking.mechanic.name.charAt(0).toUpperCase()}</div>
+                    <div>
+                      <p class="fw-bold mb-0">${booking.mechanic.name}</p>
+                      <p class="small text-muted mb-0">${booking.mechanic.phone}</p>
+                    </div>
+                  </div>
+                ` : `
+                  <p class="text-muted mb-1">Mechanic</p>
+                  <p class="fw-bold mb-3">Not assigned yet</p>
+                `}
+                ${booking.status === 'completed' && booking.payment ? `
+                  <p class="text-muted mb-1">Payment Status</p>
+                  <p class="fw-bold mb-0">${booking.payment.status === 'completed' ? '<span class="text-success">Paid</span>' : '<span class="text-warning">Pending Payment</span>'}</p>
+                ` : ''}
+              </div>
+            </div>
+            <div class="mb-4">
+              <h6 class="fw-bold">Description</h6>
+              <p class="mb-0">${booking.description}</p>
+            </div>
+            ${imagesHTML}
+            ${serviceNotesHTML}
+            ${paymentDetailsHTML}
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <a href="/admin/bookings" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Bookings
+              </a>
+              ${assignButtonHTML}
+              <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteBookingModal">
+                <i class="fas fa-trash me-2"></i> Delete Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('bookingInfoCard').innerHTML = bookingInfoHTML;
+    }
+
+    // Render customer information
+    function renderCustomerInfo(user) {
+      const customerInfoHTML = `
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">
+              <i class="fas fa-user text-primary me-2"></i>Customer Information
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="text-center mb-4">
+              <div class="avatar-circle-large bg-primary text-white mx-auto mb-3">${user.name.charAt(0).toUpperCase()}</div>
+              <h5 class="mb-1">${user.name}</h5>
+              <p class="text-muted mb-0">${user.email}</p>
+            </div>
+            <div class="mb-3">
+              <p class="text-muted mb-1">Phone</p>
+              <p class="fw-bold mb-3">${user.phone}</p>
+              <p class="text-muted mb-1">Address</p>
+              <p class="fw-bold mb-0">${user.address}</p>
+            </div>
+            <div class="d-grid gap-2">
+              <a href="/admin/user/${user._id}" class="btn btn-outline-primary">
+                <i class="fas fa-user me-2"></i> View User Profile
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('customerInfoCard').innerHTML = customerInfoHTML;
+    }
+
+    // Render timeline
+    function renderTimeline(booking) {
+      const timelineItems = [];
+
+      // Booking created
+      timelineItems.push(`
+        <li class="timeline-item">
+          <div class="timeline-marker bg-success"></div>
+          <div class="timeline-content p-3">
+            <h6 class="mb-1">Booking Created</h6>
+            <p class="small text-muted mb-0">${new Date(booking.createdAt).toLocaleString()}</p>
+          </div>
+        </li>
+      `);
+
+      // Mechanic assigned
+      if (booking.status !== 'pending' || booking.mechanic) {
+        timelineItems.push(`
+          <li class="timeline-item">
+            <div class="timeline-marker ${booking.mechanic ? 'bg-success' : 'bg-secondary'}"></div>
+            <div class="timeline-content p-3">
+              <h6 class="mb-1">Mechanic Assigned</h6>
+              ${booking.mechanic ? `
+                <p class="small mb-1">${booking.mechanic.name}</p>
+                <p class="small text-muted mb-0">Assigned on ${new Date(booking.updatedAt).toLocaleString()}</p>
+              ` : `
+                <p class="small text-muted mb-0">Waiting for mechanic assignment</p>
+              `}
+            </div>
+          </li>
+        `);
+      }
+
+      // Booking accepted
+      if (['accepted', 'in-progress', 'completed'].includes(booking.status)) {
+        timelineItems.push(`
+          <li class="timeline-item">
+            <div class="timeline-marker bg-success"></div>
+            <div class="timeline-content p-3">
+              <h6 class="mb-1">Booking Accepted</h6>
+              <p class="small text-muted mb-0">Mechanic accepted the booking</p>
+            </div>
+          </li>
+        `);
+      }
+
+      // Service started
+      if (['in-progress', 'completed'].includes(booking.status)) {
+        timelineItems.push(`
+          <li class="timeline-item">
+            <div class="timeline-marker bg-success"></div>
+            <div class="timeline-content p-3">
+              <h6 class="mb-1">Service Started</h6>
+              <p class="small text-muted mb-0">Mechanic started working on the bike</p>
+            </div>
+          </li>
+        `);
+      }
+
+      // Service completed
+      if (booking.status === 'completed') {
+        timelineItems.push(`
+          <li class="timeline-item">
+            <div class="timeline-marker bg-success"></div>
+            <div class="timeline-content p-3">
+              <h6 class="mb-1">Service Completed</h6>
+              <p class="small text-muted mb-0">Service has been completed successfully</p>
+            </div>
+          </li>
+        `);
+
+        // Payment
+        timelineItems.push(`
+          <li class="timeline-item">
+            <div class="timeline-marker ${booking.payment && booking.payment.status === 'completed' ? 'bg-success' : 'bg-warning'}"></div>
+            <div class="timeline-content p-3">
+              <h6 class="mb-1">Payment</h6>
+              <p class="small ${booking.payment && booking.payment.status === 'completed' ? 'text-success' : 'text-warning'} mb-0">
+                ${booking.payment && booking.payment.status === 'completed' ? 'Payment completed' : 'Payment pending'}
+              </p>
+            </div>
+          </li>
+        `);
+      }
+
+      // Cancelled
+      if (booking.status === 'cancelled') {
+        timelineItems.push(`
+          <li class="timeline-item">
+            <div class="timeline-marker bg-danger"></div>
+            <div class="timeline-content p-3">
+              <h6 class="mb-1">Booking Cancelled</h6>
+              <p class="small text-muted mb-0">Booking was cancelled</p>
+            </div>
+          </li>
+        `);
+      }
+
+      const timelineHTML = `
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">
+              <i class="fas fa-clipboard-list text-primary me-2"></i>Booking Timeline
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <ul class="timeline">
+              ${timelineItems.join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('timelineCard').innerHTML = timelineHTML;
+    }
+
+    // Initialize location map
+    function initializeLocationMap(location) {
+      const lat = location.coordinates ? location.coordinates[1] : 0;
+      const lng = location.coordinates ? location.coordinates[0] : 0;
+
+      bookingMap = L.map('booking-map').setView([lat, lng], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(bookingMap);
 
-      L.marker([bookingLat, bookingLng]).addTo(bookingMap)
+      L.marker([lat, lng]).addTo(bookingMap)
         .bindPopup('Booking Location')
+        .openPopup();
+
+      // Update location text
+      document.querySelector('#bookingLocationCard .p-3 p').innerHTML = `
+        <i class="fas fa-map-marker-alt text-danger me-2"></i>${location.address}
+      `;
+    }
+
+    // Initialize tracking map
+    function initializeTrackingMap(location) {
+      const lat = location.coordinates ? location.coordinates[1] : 0;
+      const lng = location.coordinates ? location.coordinates[0] : 0;
+
+      trackingMap = L.map('tracking-map').setView([lat, lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(trackingMap);
+
+      L.marker([lat, lng]).addTo(trackingMap)
+        .bindPopup('Current Location')
         .openPopup();
     }
 
-    // Optionally initialize tracking map placeholder (if present)
-    const trackingMapEl = document.getElementById('tracking-map');
-    if (trackingMapEl) {
-      // Fallback to booking location for initial view; live tracking can update this later
-      const baseLat = bookingMapEl ? (parseFloat(bookingMapEl.getAttribute('data-lat')) || 0) : 0;
-      const baseLng = bookingMapEl ? (parseFloat(bookingMapEl.getAttribute('data-lng')) || 0) : 0;
-      const trackingMap = L.map('tracking-map').setView([baseLat, baseLng], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(trackingMap);
+    // Setup modals
+    function setupModals(booking, availableMechanics) {
+      // Assign mechanic modal
+      const mechanicSelect = document.getElementById('mechanicId');
+      mechanicSelect.innerHTML = '<option value="" selected disabled>Choose a mechanic...</option>';
+
+      if (availableMechanics.length === 0) {
+        mechanicSelect.innerHTML += '<option value="" disabled>No matching mechanics available</option>';
+      } else {
+        availableMechanics.forEach(mechanic => {
+          mechanicSelect.innerHTML += `
+            <option value="${mechanic._id}">${mechanic.name} - ${mechanic.specialization ? mechanic.specialization.join(', ') : 'General'} - ${mechanic.experience} years</option>
+          `;
+        });
+      }
+
+      document.getElementById('assignMechanicForm').action = `/admin/booking/${booking._id}/assign-mechanic`;
+
+      // Delete booking modal
+      document.getElementById('deleteBookingForm').action = `/admin/booking/${booking._id}/delete`;
     }
+
+    // Load data on page load
+    fetchBookingDetails();
   });
 </script>
