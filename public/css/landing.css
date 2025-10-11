@@ -252,6 +252,43 @@ body {
   height: 100%;
 }
 
+/* Hover effect for testimonial cards (What Our Users Say) */
+.testimonial-card {
+  transition: transform 0.28s cubic-bezier(.2,.9,.3,1), box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-10px) scale(1.006);
+  box-shadow: 0 22px 44px rgba(15, 23, 42, 0.10);
+}
+
+.testimonial-card .testimonial-avatar {
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.testimonial-card:hover .testimonial-avatar {
+  transform: scale(1.06);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.testimonial-card .testimonial-rating i {
+  transition: transform 0.2s ease, color 0.2s ease;
+  color: #ffc107;
+}
+
+.testimonial-card:hover .testimonial-rating i {
+  transform: translateY(-2px);
+  color: #ffca2a;
+}
+
+.testimonial-text {
+  transition: color 0.22s ease, transform 0.22s ease;
+}
+
+.testimonial-card:hover .testimonial-text {
+  color: #222;
+}
+
 .testimonial-rating {
   color: #ffc107;
   margin-bottom: 1rem;
