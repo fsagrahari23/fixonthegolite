@@ -1,2 +1,0 @@
-- [x] Modify views/user/premium.ejs to remove server-side EJS logic for subscription and move it to client-side JavaScript
-- [x] Add JavaScript to fetch subscription data from /api/premium and dynamically update the page content
