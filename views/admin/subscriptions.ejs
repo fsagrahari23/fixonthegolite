@@ -196,7 +196,6 @@
   </div>
 </div>
 
-<% const extraScripts = `
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchSubscription');
@@ -207,14 +206,14 @@
     const applyFiltersBtn = document.getElementById('applyFilters');
     const subscriptionsTable = document.getElementById('subscriptionsTable');
     const tableRows = subscriptionsTable ? subscriptionsTable.querySelectorAll('tbody tr') : [];
-    
+
     // Apply filters function
     function applyFilters() {
       const searchTerm = searchInput.value.toLowerCase();
       const statusValue = statusFilter.value;
       const planValue = planFilter.value;
       const dateFromValue = dateFromFilter.value ? new Date(dateFromFilter.value) : null;
-      
+
       tableRows.forEach(row => {
         const date = new Date(row.getAttribute('data-date'));
         const rowText = row.textContent.toLowerCase();
@@ -222,23 +221,23 @@
         const statusText = statusCell ? statusCell.textContent.toLowerCase() : '';
         const planCell = row.querySelector('td:nth-child(2)');
         const planText = planCell ? planCell.textContent.toLowerCase() : '';
-        
-        const statusMatch = statusValue === 'all' || 
+
+        const statusMatch = statusValue === 'all' ||
                           (statusValue === 'active' && statusText.includes('active')) ||
                           (statusValue === 'cancelled' && statusText.includes('cancelled')) ||
                           (statusValue === 'expired' && statusText.includes('expired'));
-                          
-        const planMatch = planValue === 'all' || 
+
+        const planMatch = planValue === 'all' ||
                         (planValue === 'monthly' && planText.includes('monthly')) ||
                         (planValue === 'yearly' && planText.includes('yearly'));
-                        
+
         const searchMatch = !searchTerm || rowText.includes(searchTerm);
-        
+
         let dateMatch = true;
         if (dateFromValue) {
           dateMatch = date >= dateFromValue;
         }
-        
+
         if (statusMatch && planMatch && searchMatch && dateMatch) {
           row.style.display = '';
         } else {
@@ -246,16 +245,16 @@
         }
       });
     }
-    
+
     // Event listeners
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener('click', applyFilters);
     }
-    
+
     if (searchButton) {
       searchButton.addEventListener('click', applyFilters);
     }
-    
+
     if (searchInput) {
       searchInput.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
@@ -263,12 +262,12 @@
         }
       });
     }
-    
+
     // Initialize charts
     if (document.getElementById('plansChart')) {
       // Subscription plans chart
       const plansCtx = document.getElementById('plansChart').getContext('2d');
-      
+
       // Count monthly and yearly subscriptions
       let monthlyCount = 0;
       let yearlyCount = 0;
@@ -277,7 +276,7 @@
         const planText = planCell ? planCell.textContent.trim() : '';
         const statusCell = row.querySelector('td:nth-child(6)');
         const statusText = statusCell ? statusCell.textContent.trim() : '';
-        
+
         if (statusText.includes('Active')) {
           if (planText.includes('Monthly')) {
             monthlyCount++;
@@ -286,7 +285,7 @@
           }
         }
       });
-      
+
       new Chart(plansCtx, {
         type: 'doughnut',
         data: {
@@ -313,19 +312,19 @@
         }
       });
     }
-    
+
     if (document.getElementById('revenueChart')) {
       // Prepare data for revenue chart (last 6 months)
       const months = [];
       const revenues = [0, 0, 0, 0, 0, 0];
-      
+
       // Get last 6 months
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
         months.push(date.toLocaleString('default', { month: 'short' }));
       }
-      
+
       // Sample revenue data - in a real implementation, this would come from the database
       const revenueCtx = document.getElementById('revenueChart').getContext('2d');
       new Chart(revenueCtx, {
@@ -365,4 +364,3 @@
     }
   });
 </script>
-` %>
