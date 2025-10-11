@@ -16,11 +16,9 @@
     <div class="col-lg-4 mb-4">
       <div class="card border-0 shadow-sm">
         <div class="card-body text-center p-4">
-          <div class="avatar-circle-large bg-primary text-white mx-auto mb-3">
-            <%= user.name.charAt(0).toUpperCase() %>
-          </div>
-          <h4 class="mb-1"><%= user.name %></h4>
-          <p class="text-muted mb-3"><%= user.email %></p>
+          <div class="avatar-circle-large bg-primary text-white mx-auto mb-3" id="user-avatar">U</div>
+          <h4 class="mb-1" id="user-name">Loading...</h4>
+          <p class="text-muted mb-3" id="user-email">Loading...</p>
 
           <div class="d-flex justify-content-center mb-3">
             <span class="badge bg-primary rounded-pill px-3 py-2">
@@ -32,13 +30,12 @@
             <div class="row text-start">
               <div class="col-6 mb-2">
                 <p class="text-muted mb-1 small">Member Since</p>
-                <p class="mb-0 fw-bold">
-                  <%= new Date(user.createdAt).toLocaleDateString() %>
-                </p>
+                <p class="mb-0 fw-bold" id="memberSince">Loading...</p>
               </div>
               <div class="col-6 mb-2">
                 <p class="text-muted mb-1 small">Total Bookings</p>
                 <p class="mb-0 fw-bold" id="totalBookings">Loading...</p>
+                <p class="mb-0 fw-bold" id="memberSince">Loading...</p>
               </div>
             </div>
           </div>
@@ -48,107 +45,10 @@
         <div class="card-header bg-white">
           <h5 class="mb-0"><i class="fas fa-crown text-warning me-2"></i>Membership Status</h5>
         </div>
-        <div class="card-body">
-          <% if (subscription && subscription.status === 'active' && new Date(subscription.expiresAt) > new Date()) { %>
-            <div class="d-flex align-items-center mb-3">
-              <div class="membership-badge bg-success text-white me-3">
-                <i class="fas fa-crown"></i>
-              </div>
-              <div>
-                <h5 class="mb-1">Premium Member</h5>
-                <p class="text-muted mb-0">
-                  <%= subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1) %> Plan · 
-                  Expires: <%= new Date(subscription.expiresAt).toLocaleDateString() %>
-                </p>
-              </div>
-            </div>
-            <!-- Add more premium features here -->
-            <div class="card mt-3">
-              <div class="card-header bg-primary text-white">
-                Premium Features
-              </div>
-              <div class="card-body">
-                <% if (premiumFeatures) { %>
-                  <ul class="list-group list-group-flush">
-            
-                    <% if (premiumFeatures.priorityService) { %>
-                      <li class="list-group-item">
-                        <span class="badge bg-success me-2">✔</span>
-                        Priority Service Enabled
-                      </li>
-                    <% } %>
-            
-                    <% if (premiumFeatures.tracking) { %>
-                      <li class="list-group-item">
-                        <span class="badge bg-info me-2">📍</span>
-                        Real-time Tracking Enabled
-                      </li>
-                    <% } %>
-            
-                    <% if (premiumFeatures.discounts && premiumFeatures.discounts > 0) { %>
-                      <li class="list-group-item">
-                        <span class="badge bg-warning text-dark me-2">💸</span>
-                        <%= premiumFeatures.discounts %>% Discount Available
-                      </li>
-                    <% } %>
-            
-                    <% if (premiumFeatures.emergencyAssistance) { %>
-                      <li class="list-group-item">
-                        <span class="badge bg-danger me-2">🚨</span>
-                        Emergency Assistance Available
-                      </li>
-                    <% } %>
-            
-                    <% if (premiumFeatures.freeTowing && premiumFeatures.freeTowing > 0) { %>
-                      <li class="list-group-item">
-                        <span class="badge bg-secondary me-2">🚗</span>
-                        Free Towing: <%= premiumFeatures.freeTowing %> times
-                      </li>
-                    <% } %>
-            
-                    <% if (premiumFeatures.maintenanceChecks) { %>
-                      <li class="list-group-item">
-                        <span class="badge bg-primary me-2">🔧</span>
-                        Regular Maintenance Checks Included
-                      </li>
-                    <% } %>
-            
-                  </ul>
-                <% } else { %>
-                  <div class="alert alert-secondary" role="alert">
-                    No premium features available.
-                  </div>
-                <% } %>
-              </div>
-            </div>
-                    
-            <div class="d-grid gap-2">
-              <a href="/user/premium" class="btn btn-outline-primary">
-                <i class="fas fa-sync-alt me-2"></i> Change Plan
-              </a>
-              <form action="/user/premium/cancel" method="POST">
-                <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel your subscription?')">
-                  <i class="fas fa-times-circle me-2"></i> Cancel Subscription
-                </button>
-              </form>
-            </div>
-          <% } else { %>
-            <div class="d-flex align-items-center mb-3">
-              <div class="membership-badge bg-secondary text-white me-3">
-                <i class="fas fa-user"></i>
-              </div>
-              <div>
-                <h5 class="mb-1">Basic Member</h5>
-                <p class="text-muted mb-0">Upgrade to premium for exclusive features</p>
-              </div>
-            </div>
-            
-            <div class="d-grid">
-              <a href="/user/premium" class="btn btn-primary">
-                <i class="fas fa-crown me-2"></i> Upgrade to Premium
-              </a>
-            </div>
-          <% } %>
+        <div class="card-body" id="membership-status">
+          <div class="text-center py-4">
+            <p class="text-muted">Loading membership status...</p>
+          </div>
         </div>
       </div>
 
@@ -187,7 +87,7 @@
                     class="form-control"
                     id="name"
                     name="name"
-                    value="<%= user.name %>"
+                    value=""
                     required
                   />
                 </div>
@@ -202,7 +102,7 @@
                     type="email"
                     class="form-control"
                     id="email"
-                    value="<%= user.email %>"
+                    value=""
                     disabled
                   />
                 </div>
@@ -222,7 +122,7 @@
                     class="form-control"
                     id="phone"
                     name="phone"
-                    value="<%= user.phone %>"
+                    value=""
                     required
                   />
                 </div>
@@ -238,7 +138,7 @@
                     class="form-control"
                     id="address"
                     name="address"
-                    value="<%= user.address %>"
+                    value=""
                     required
                   />
                 </div>
@@ -255,13 +155,13 @@
                 type="hidden"
                 id="latitude"
                 name="latitude"
-                value="<%= user.location.coordinates[1] %>"
+                value=""
               />
               <input
                 type="hidden"
                 id="longitude"
                 name="longitude"
-                value="<%= user.location.coordinates[0] %>"
+                value=""
               />
             </div>
 
@@ -356,87 +256,168 @@
 />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Fetch total bookings
-    fetch('/user/api/bookings/count')
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('totalBookings').textContent = data.count || 0;
-      })
-      .catch(error => {
-        console.error('Error fetching booking count:', error);
-        document.getElementById('totalBookings').textContent = '0';
+  document.addEventListener('DOMContentLoaded', async function() {
+    try {
+      const response = await fetch('/user/api/profile');
+      const data = await response.json();
+
+      if (data.error) {
+        console.error('Error loading profile data:', data.error);
+        return;
+      }
+
+      const { user, subscription, subscriptionHistory, isPremium, remainingBookings, premiumFeatures } = data;
+
+      // Profile info
+      document.getElementById('user-avatar').textContent = user.name.charAt(0).toUpperCase();
+      document.getElementById('user-name').textContent = user.name;
+      document.getElementById('user-email').textContent = user.email;
+      document.getElementById('memberSince').textContent = new Date(user.createdAt).toLocaleDateString();
+      document.getElementById('totalBookings').textContent = user.bookingsCount || 0; // Assuming we add this to API
+
+      // Form fields
+      document.getElementById('name').value = user.name;
+      document.getElementById('email').value = user.email;
+      document.getElementById('phone').value = user.phone;
+      document.getElementById('address').value = user.address;
+      document.getElementById('latitude').value = user.location?.coordinates?.[1] || '';
+      document.getElementById('longitude').value = user.location?.coordinates?.[0] || '';
+
+      // Membership status
+      const membershipStatus = document.getElementById('membership-status');
+      if (isPremium) {
+        membershipStatus.innerHTML = `
+          <div class="d-flex align-items-center mb-3">
+            <div class="membership-badge bg-success text-white me-3">
+              <i class="fas fa-crown"></i>
+            </div>
+            <div>
+              <h5 class="mb-1">Premium Member</h5>
+              <p class="text-muted mb-0">
+                ${subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)} Plan · 
+                Expires: ${new Date(subscription.expiresAt).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+          <div class="card mt-3">
+            <div class="card-header bg-primary text-white">
+              Premium Features
+            </div>
+            <div class="card-body">
+              <ul class="list-group list-group-flush">
+                ${premiumFeatures.priorityService ? '<li class="list-group-item"><span class="badge bg-success me-2">✔</span>Priority Service Enabled</li>' : ''}
+                ${premiumFeatures.tracking ? '<li class="list-group-item"><span class="badge bg-info me-2">📍</span>Real-time Tracking Enabled</li>' : ''}
+                ${premiumFeatures.discounts ? `<li class="list-group-item"><span class="badge bg-warning text-dark me-2">💸</span>${premiumFeatures.discounts}% Discount Available</li>` : ''}
+                ${premiumFeatures.emergencyAssistance ? '<li class="list-group-item"><span class="badge bg-danger me-2">🚨</span>Emergency Assistance Available</li>' : ''}
+                ${premiumFeatures.freeTowing ? `<li class="list-group-item"><span class="badge bg-secondary me-2">🚗</span>Free Towing: ${premiumFeatures.freeTowing} times</li>` : ''}
+                ${premiumFeatures.maintenanceChecks ? '<li class="list-group-item"><span class="badge bg-primary me-2">🔧</span>Regular Maintenance Checks Included</li>' : ''}
+              </ul>
+            </div>
+          </div>
+          <div class="d-grid gap-2">
+            <a href="/user/premium" class="btn btn-outline-primary">
+              <i class="fas fa-sync-alt me-2"></i> Change Plan
+            </a>
+            <form action="/user/premium/cancel" method="POST">
+              <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure you want to cancel your subscription?')">
+                <i class="fas fa-times-circle me-2"></i> Cancel Subscription
+              </button>
+            </form>
+          </div>
+        `;
+      } else {
+        membershipStatus.innerHTML = `
+          <div class="d-flex align-items-center mb-3">
+            <div class="membership-badge bg-secondary text-white me-3">
+              <i class="fas fa-user"></i>
+            </div>
+            <div>
+              <h5 class="mb-1">Basic Member</h5>
+              <p class="text-muted mb-0">Upgrade to premium for exclusive features</p>
+            </div>
+          </div>
+          <div class="d-grid">
+            <a href="/user/premium" class="btn btn-primary">
+              <i class="fas fa-crown me-2"></i> Upgrade to Premium
+            </a>
+          </div>
+        `;
+      }
+
+      // Initialize current location map
+      const userMap = L.map('user-map').setView([
+        user.location?.coordinates?.[1] || 20.5937,
+        user.location?.coordinates?.[0] || 78.9629
+      ], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(userMap);
+
+      if (user.location?.coordinates) {
+        L.marker([
+          user.location.coordinates[1],
+          user.location.coordinates[0]
+        ]).addTo(userMap)
+          .bindPopup('Your current location')
+          .openPopup();
+      }
+
+      // Initialize update location map
+      const updateMap = L.map('update-map').setView([
+        user.location?.coordinates?.[1] || 20.5937,
+        user.location?.coordinates?.[0] || 78.9629
+      ], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(updateMap);
+
+      // Add draggable marker for updating location
+      const marker = L.marker([
+        user.location?.coordinates?.[1] || 20.5937,
+        user.location?.coordinates?.[0] || 78.9629
+      ], { draggable: true }).addTo(updateMap);
+
+      marker.on('dragend', function(e) {
+        const position = marker.getLatLng();
+        document.getElementById('latitude').value = position.lat;
+        document.getElementById('longitude').value = position.lng;
+
+        // Try to get address from coordinates
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.display_name) {
+              document.getElementById('address').value = data.display_name;
+            }
+          })
+          .catch(error => console.error('Error getting address:', error));
       });
 
-    // Initialize current location map
-    const userMap = L.map('user-map').setView([
-      <%= user.location.coordinates[1] || 0 %>,
-      <%= user.location.coordinates[0] || 0 %>
-    ], 13);
+      // Update marker when address changes
+      document.getElementById('address').addEventListener('change', function() {
+        const address = this.value;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(userMap);
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.length > 0) {
+              const lat = parseFloat(data[0].lat);
+              const lng = parseFloat(data[0].lon);
 
-    // Add marker for current location
-    L.marker([
-      <%= user.location.coordinates[1] || 0 %>,
-      <%= user.location.coordinates[0] || 0 %>
-    ]).addTo(userMap)
-      .bindPopup('Your current location')
-      .openPopup();
+              document.getElementById('latitude').value = lat;
+              document.getElementById('longitude').value = lng;
 
-    // Initialize update location map
-    const updateMap = L.map('update-map').setView([
-      <%= user.location.coordinates[1] || 0 %>,
-      <%= user.location.coordinates[0] || 0 %>
-    ], 13);
+              updateMap.setView([lat, lng], 15);
+              marker.setLatLng([lat, lng]);
+            }
+          })
+          .catch(error => console.error('Error geocoding address:', error));
+      });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(updateMap);
-
-    // Add draggable marker for updating location
-    const marker = L.marker([
-      <%= user.location.coordinates[1] || 0 %>,
-      <%= user.location.coordinates[0] || 0 %>
-    ], { draggable: true }).addTo(updateMap);
-
-    marker.on('dragend', function(e) {
-      const position = marker.getLatLng();
-      document.getElementById('latitude').value = position.lat;
-      document.getElementById('longitude').value = position.lng;
-
-      // Try to get address from coordinates
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.display_name) {
-            document.getElementById('address').value = data.display_name;
-          }
-        })
-        .catch(error => console.error('Error getting address:', error));
-    });
-
-    // Update marker when address changes
-    document.getElementById('address').addEventListener('change', function() {
-      const address = this.value;
-
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.length > 0) {
-            const lat = parseFloat(data[0].lat);
-            const lng = parseFloat(data[0].lon);
-
-            document.getElementById('latitude').value = lat;
-            document.getElementById('longitude').value = lng;
-
-            updateMap.setView([lat, lng], 15);
-            marker.setLatLng([lat, lng]);
-          }
-        })
-        .catch(error => console.error('Error geocoding address:', error));
-    });
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+    }
   });
 </script>
