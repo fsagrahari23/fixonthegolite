@@ -6,9 +6,9 @@ const Booking = require("../models/Booking");
 const Chat = require("../models/Chat");
 const path = require("path");
 
-// Serve static mechanic dashboard HTML
+// Mechanic dashboard
 router.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "mechanic", "dashboard.html"));
+  res.render("mechanic/dashboard", { title: "Mechanic Dashboard" });
 });
 
 // API: dashboard data as JSON (used by the static HTML)
@@ -99,7 +99,7 @@ router.get("/api/dashboard", async (req, res) => {
 
 // View booking details
 router.get('/booking/:id', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'mechanic', 'booking-details.html'));
+  res.sendFile(path.join(__dirname, '../public/mechanic/booking-details.html'));
 });
 
 // API: booking details
@@ -249,7 +249,7 @@ router.post("/booking/:id/complete", async (req, res) => {
 
 // View booking history
 router.get('/history', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'mechanic', 'history.html'));
+  res.render("mechanic/history", { title: "Job History" });
 });
 
 router.get('/api/history', async (req, res) => {
@@ -267,7 +267,7 @@ router.get('/api/history', async (req, res) => {
 
 // Profile page
 router.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'mechanic', 'profile.html'));
+  res.render("mechanic/profile", { title: "My Profile" });
 });
 
 router.get('/api/profile', async (req, res) => {

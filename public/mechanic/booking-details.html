@@ -1,128 +1,596 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Booking Details | Vehicle Assistance</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link rel="stylesheet" href="/css/style.css" />
-  </head>
-  <body>
-    <div id="navbar-placeholder"></div>
-    <div class="container mt-4">
-      <div id="messages-placeholder"></div>
-      <div id="app">Loading booking...</div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-4">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/mechanic/dashboard">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="/mechanic/history">Job History</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Job Details</li>
+        </ol>
+      </nav>
     </div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/main.js"></script>
-    <script>
-      function renderNavbar(user, path){
-        const container = document.getElementById('navbar-placeholder');
-        const userName = user?.name || '';
-        const userInitial = userName.charAt(0) ? userName.charAt(0).toUpperCase() : '';
-        const navHtml = `<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top"><div class="container"><a class="navbar-brand" href="/"><i class="fas fa-motorcycle me-2"></i>FixOnTheGo</a></div></nav>`;
-        container.innerHTML = navHtml;
-      }
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Job Information</h5>
+          <span class="booking-status" id="booking-status">
+            Loading...
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <p class="text-muted mb-1">Booking ID</p>
+              <p class="fw-bold mb-3" id="booking-id">Loading...</p>
 
-      async function load(){
-        const id = window.location.pathname.split('/').pop();
-        const res = await fetch('/mechanic/api/booking/'+id);
-        if (!res.ok) { document.getElementById('app').innerText='Failed to load booking'; return; }
-        const data = await res.json();
-        renderNavbar(data.user,'/mechanic/dashboard');
-        renderBooking(data);
-      }
+              <p class="text-muted mb-1">Date & Time</p>
+              <p class="fw-bold mb-3" id="booking-date">Loading...</p>
 
-      function renderBooking(data){
-        const b = data.booking || {};
-        const profile = data.profile || {};
-        const user = data.user || {};
-        let html = `
-          <div class="container py-4">
-            <div class="row"><div class="col-md-12 mb-4"><nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="/mechanic/dashboard">Dashboard</a></li><li class="breadcrumb-item"><a href="/mechanic/history">Job History</a></li><li class="breadcrumb-item active" aria-current="page">Job Details</li></ol></nav></div></div>
-            <div class="row"><div class="col-lg-8"><div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white d-flex justify-content-between align-items-center"><h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Job Information</h5><span class="booking-status status-${b.status}">${b.status}</span></div><div class="card-body">
-            <div class="row mb-4"><div class="col-md-6">
-              <p class="text-muted mb-1">Booking ID</p><p class="fw-bold mb-3">${b._id || ''}</p>
-              <p class="text-muted mb-1">Date & Time</p><p class="fw-bold mb-3">${new Date(b.createdAt||'').toLocaleString()}</p>
-              <p class="text-muted mb-1">Problem Category</p><p class="fw-bold mb-3">${b.problemCategory||''}</p>
-              <p class="text-muted mb-1">Booking Status</p><p class="fw-bold mb-0">${b.status||''}</p>
+              <p class="text-muted mb-1">Problem Category</p>
+              <p class="fw-bold mb-3" id="problem-category">Loading...</p>
+
+              <p class="text-muted mb-1">Booking Status</p>
+              <p class="fw-bold mb-0" id="booking-status-text">Loading...</p>
             </div>
             <div class="col-md-6">
-              <p class="text-muted mb-1">Location</p><p class="fw-bold mb-3">${b.location?.address||''}</p>
-              <p class="text-muted mb-1">Customer</p><div class="d-flex align-items-center mb-3"><div class="avatar-circle bg-primary text-white me-2">${(b.user?.name||'').charAt(0).toUpperCase()}</div><div><p class="fw-bold mb-0">${b.user?.name||''}</p><p class="small text-muted mb-0">${b.user?.phone||''}</p></div></div>
-            </div></div>
-            <div class="mb-4"><h6 class="fw-bold">Description</h6><p class="mb-0">${b.description||''}</p></div>
-        `;
+              <p class="text-muted mb-1">Location</p>
+              <p class="fw-bold mb-3" id="location-address">Loading...</p>
 
-        if (Array.isArray(b.images) && b.images.length>0) {
-          html += '<div class="mb-4"><h6 class="fw-bold">Images</h6><div class="row g-3">' + b.images.map(img => `<div class="col-md-4 col-6"><a href="${img}" target="_blank" class="image-popup"><img src="${img}" alt="Booking Image" class="img-fluid rounded shadow-sm" style="object-fit: cover; height: 150px; width: 100%;"></a></div>`).join('') + '</div></div>';
-        }
+              <p class="text-muted mb-1">Customer</p>
+              <div class="d-flex align-items-center mb-3">
+                <div class="avatar-circle bg-primary text-white me-2" id="customer-avatar">L</div>
+                <div>
+                  <p class="fw-bold mb-0" id="customer-name">Loading...</p>
+                  <p class="small text-muted mb-0" id="customer-phone">Loading...</p>
+                </div>
+              </div>
 
-        // Payment and actions
-        html += `<div class="d-flex flex-wrap gap-2 mt-4"><a href="/mechanic/history" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i> Back to History</a>`;
-        if (b.status === 'pending') html += `<form action="/mechanic/booking/${b._id}/accept" method="POST" class="d-inline"><button type="submit" class="btn btn-success"><i class="fas fa-check-circle me-2"></i> Accept Job</button></form>`;
-        if (b.status === 'accepted') html += `<form action="/mechanic/booking/${b._id}/start" method="POST" class="d-inline"><button type="submit" class="btn btn-primary"><i class="fas fa-play-circle me-2"></i> Start Service</button></form>`;
-        if (['accepted','in-progress'].includes(b.status)) html += `<a href="/chat/${b._id}" class="btn btn-info"><i class="fas fa-comments me-2"></i> Chat with Customer</a>`;
-        html += `</div>`;
+              <div id="payment-status-section" style="display: none;">
+                <p class="text-muted mb-1">Payment Status</p>
+                <p class="fw-bold mb-0" id="payment-status">Loading...</p>
+              </div>
+            </div>
+          </div>
 
-        html += `</div></div>`; // close main card
+          <div class="mb-4">
+            <h6 class="fw-bold">Description</h6>
+            <p class="mb-0" id="booking-description">Loading...</p>
+          </div>
 
-        // right column
-        html += `<div class="col-lg-4"><div class="card border-0 shadow-sm mb-4"><div class="card-header bg-white"><h5 class="mb-0"><i class="fas fa-user text-primary me-2"></i>Customer Information</h5></div><div class="card-body"><div class="text-center mb-4"><div class="avatar-circle-large bg-primary text-white mx-auto mb-3">${(b.user?.name||'').charAt(0).toUpperCase()}</div><h5 class="mb-1">${b.user?.name||''}</h5><p class="text-muted mb-0">${b.user?.phone||''}</p></div><div class="mb-3"><p class="text-muted mb-1">Address</p><p class="fw-bold mb-0">${b.user?.address||''}</p></div><div class="d-grid gap-2"><a href="tel:${b.user?.phone||''}" class="btn btn-outline-primary"><i class="fas fa-phone me-2"></i> Call Customer</a>`;
-        if (['accepted','in-progress'].includes(b.status)) html += `<a href="/chat/${b._id}" class="btn btn-outline-info"><i class="fas fa-comments me-2"></i> Chat with Customer</a>`;
-        html += `</div></div></div>`;
+          <div class="mb-4" id="images-section" style="display: none;">
+            <h6 class="fw-bold">Images</h6>
+            <div class="row g-3" id="images-container">
+            </div>
+          </div>
 
-        // maps and timeline omitted for brevity but can be added here similarly
+          <div class="mb-4" id="service-notes-section" style="display: none;">
+            <h6 class="fw-bold">Service Notes</h6>
+            <div class="alert alert-light" id="service-notes">Loading...</div>
+          </div>
 
-        html += `</div></div></div>`; // close container
+          <div class="mb-4" id="payment-details-section" style="display: none;">
+            <h6 class="fw-bold">Payment Details</h6>
+            <div class="card bg-light border-0">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <p class="text-muted mb-1">Amount</p>
+                    <p class="fw-bold text-success mb-3" id="payment-amount">Loading...</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="text-muted mb-1">Status</p>
+                    <p class="fw-bold mb-0" id="payment-status-detail">Loading...</p>
+                  </div>
+                </div>
 
-        document.getElementById('app').innerHTML = html;
-        // load leaflet for maps
-        const LScript = document.createElement('script');
-        LScript.src = 'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js';
-        document.body.appendChild(LScript);
-        LScript.onload = function() {
-          try {
-            if (b.location && b.location.coordinates) {
-              const lat = b.location.coordinates[1];
-              const lng = b.location.coordinates[0];
-              const bookingMap = L.map('booking-map').setView([lat, lng], 15);
-              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(bookingMap);
-              L.marker([lat, lng]).addTo(bookingMap).bindPopup('Job Location').openPopup();
-            }
+                <div id="transaction-id-section" style="display: none;">
+                  <p class="text-muted mb-1">Transaction ID</p>
+                  <p class="fw-bold mb-0" id="transaction-id">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            if (b.status === 'in-progress') {
-              const locationMap = L.map('location-map').setView([b.location.coordinates[1], b.location.coordinates[0]], 13);
-              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(locationMap);
-              L.marker([b.location.coordinates[1], b.location.coordinates[0]]).addTo(locationMap).bindPopup('Customer Location').openPopup();
+          <div class="alert alert-info" id="job-info-alert" style="display: none;">
+            <div class="d-flex">
+              <i class="fas fa-info-circle fs-4 me-3"></i>
+              <div>
+                <strong>Job Information</strong>
+                <p class="mb-0" id="job-info-text">Loading...</p>
+              </div>
+            </div>
+          </div>
 
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                  const lat = position.coords.latitude;
-                  const lng = position.coords.longitude;
-                  const mechMarker = L.marker([lat, lng]).addTo(locationMap).bindPopup('Your Location').openPopup();
-                  const latlngs = [[lat, lng], [b.location.coordinates[1], b.location.coordinates[0]]];
-                  L.polyline(latlngs, {color:'blue', dashArray:'5,10'}).addTo(locationMap);
-                  locationMap.fitBounds(latlngs);
-                });
-                navigator.geolocation.watchPosition(function(position){ /* update marker if needed */ });
-              }
-            }
-          } catch(err) { console.error('Leaflet init error', err); }
-        };
+          <div class="alert alert-primary" id="job-progress-alert" style="display: none;">
+            <div class="d-flex">
+              <i class="fas fa-tools fs-4 me-3"></i>
+              <div>
+                <strong>Job In Progress</strong>
+                <p class="mb-0">You're currently working on this job. Complete the service when finished.</p>
+              </div>
+            </div>
+          </div>
 
-        // Setup modal submit to post to server (form is server-side action URL)
-        const modal = document.getElementById('completeServiceModal');
-        if (modal) {
-          // nothing else required: form posts to /mechanic/booking/:id/complete
+          <div class="d-flex flex-wrap gap-2 mt-4" id="action-buttons">
+            <a href="/mechanic/history" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left me-2"></i> Back to History
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4" id="location-map-card" style="display: none;">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-map-marker-alt text-primary me-2"></i>Your Location</h5>
+        </div>
+        <div class="card-body p-0">
+          <div id="location-map" style="height: 300px;"></div>
+          <div class="p-3">
+            <p class="mb-0 text-muted">Your real-time location is being shared with the customer.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-user text-primary me-2"></i>Customer Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center mb-4">
+            <div class="avatar-circle-large bg-primary text-white mx-auto mb-3" id="customer-avatar-large">L</div>
+            <h5 class="mb-1" id="customer-name-large">Loading...</h5>
+            <p class="text-muted mb-0" id="customer-phone-large">Loading...</p>
+          </div>
+          
+          <div class="mb-3">
+            <p class="text-muted mb-1">Address</p>
+            <p class="fw-bold mb-0" id="customer-address">Loading...</p>
+          </div>
+          
+          <div class="d-grid gap-2">
+            <a href="tel:" id="call-customer-btn" class="btn btn-outline-primary">
+              <i class="fas fa-phone me-2"></i> Call Customer
+            </a>
+            <a href="#" id="chat-customer-btn" class="btn btn-outline-info" style="display: none;">
+              <i class="fas fa-comments me-2"></i> Chat with Customer
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-clipboard-list text-primary me-2"></i>Job Timeline</h5>
+        </div>
+        <div class="card-body p-0">
+          <ul class="timeline" id="timeline">
+          </ul>
+        </div>
+      </div>
+      
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+          <h5 class="mb-0"><i class="fas fa-map-marker-alt text-primary me-2"></i>Job Location</h5>
+        </div>
+        <div class="card-body p-0">
+          <div id="booking-map" style="height: 250px;"></div>
+          <div class="p-3">
+            <p class="mb-0"><i class="fas fa-map-marker-alt text-danger me-2"></i><span id="job-location-address">Loading...</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Complete Service Modal -->
+<div class="modal fade" id="completeServiceModal" tabindex="-1" aria-labelledby="completeServiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="completeServiceModalLabel">Complete Service</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="complete-form" method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="amount" class="form-label">Service Amount ($)</label>
+            <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" required>
+            <div class="form-text">Enter the total amount for the service</div>
+          </div>
+          <div class="mb-3">
+            <label for="notes" class="form-label">Service Notes</label>
+            <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Describe the service performed..."></textarea>
+          </div>
+          <div class="alert alert-info">
+            <div class="d-flex">
+              <i class="fas fa-info-circle me-2"></i>
+              <div>
+                <p class="mb-0">After completing the service, the customer will be prompted to make the payment.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success">Complete Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .timeline {
+    position: relative;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .timeline-item {
+    position: relative;
+    padding-left: 40px;
+    border-left: 2px solid #e9ecef;
+  }
+  
+  .timeline-item:last-child {
+    border-left-color: transparent;
+  }
+  
+  .timeline-marker {
+    position: absolute;
+    top: 15px;
+    left: -8px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e9ecef;
+  }
+  
+  .timeline-content {
+    position: relative;
+  }
+  
+  .image-popup:hover img {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+</style>
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script>
+  document.addEventListener('DOMContentLoaded', async function() {
+    const pathParts = window.location.pathname.split('/');
+    const bookingId = pathParts[pathParts.length - 1];
+
+    try {
+      const response = await fetch(`/mechanic/api/booking/${bookingId}`);
+      const data = await response.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      const { booking, chat, profile, user } = data;
+
+      // Populate booking info
+      document.getElementById('booking-id').textContent = booking._id;
+      document.getElementById('booking-date').textContent = new Date(booking.createdAt).toLocaleString();
+      document.getElementById('problem-category').textContent = booking.problemCategory;
+      document.getElementById('booking-status-text').textContent = booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
+      document.getElementById('location-address').textContent = booking.location.address;
+      document.getElementById('booking-description').textContent = booking.description;
+
+      // Customer info
+      document.getElementById('customer-name').textContent = booking.user.name;
+      document.getElementById('customer-phone').textContent = booking.user.phone;
+      document.getElementById('customer-name-large').textContent = booking.user.name;
+      document.getElementById('customer-phone-large').textContent = booking.user.phone;
+      document.getElementById('customer-address').textContent = booking.user.address;
+      document.getElementById('call-customer-btn').href = `tel:${booking.user.phone}`;
+
+      // Avatar initials
+      const initial = booking.user.name.charAt(0).toUpperCase();
+      document.getElementById('customer-avatar').textContent = initial;
+      document.getElementById('customer-avatar-large').textContent = initial;
+
+      // Status badge
+      const statusEl = document.getElementById('booking-status');
+      statusEl.className = `booking-status badge bg-${getStatusColor(booking.status)}`;
+      statusEl.textContent = booking.status.charAt(0).toUpperCase() + booking.status.slice(1);
+
+      // Payment info if completed
+      if (booking.status === 'completed' && booking.payment) {
+        document.getElementById('payment-status-section').style.display = 'block';
+        document.getElementById('payment-status').textContent = booking.payment.status.charAt(0).toUpperCase() + booking.payment.status.slice(1);
+        document.getElementById('payment-details-section').style.display = 'block';
+        document.getElementById('payment-amount').textContent = `$${booking.payment.amount}`;
+        document.getElementById('payment-status-detail').textContent = booking.payment.status.charAt(0).toUpperCase() + booking.payment.status.slice(1);
+        if (booking.payment.transactionId) {
+          document.getElementById('transaction-id-section').style.display = 'block';
+          document.getElementById('transaction-id').textContent = booking.payment.transactionId;
         }
       }
 
-      load().catch(e=>{console.error(e); document.getElementById('app').innerText='Error';});
-    </script>
-  </body>
-</html>
+      // Service notes if completed
+      if (booking.status === 'completed' && booking.notes) {
+        document.getElementById('service-notes-section').style.display = 'block';
+        document.getElementById('service-notes').textContent = booking.notes;
+      }
+
+      // Images if any
+      if (booking.images && booking.images.length > 0) {
+        document.getElementById('images-section').style.display = 'block';
+        const container = document.getElementById('images-container');
+        booking.images.forEach(image => {
+          const col = document.createElement('div');
+          col.className = 'col-md-4';
+          col.innerHTML = `<img src="${image}" class="img-fluid rounded image-popup" alt="Booking image">`;
+          container.appendChild(col);
+        });
+      }
+
+      // Action buttons
+      const actionButtons = document.getElementById('action-buttons');
+      if (booking.status === 'pending') {
+        actionButtons.innerHTML += `
+          <form action="/mechanic/booking/${booking._id}/accept" method="POST" style="display: inline;">
+            <button type="submit" class="btn btn-success">Accept Job</button>
+          </form>
+          <a href="/mechanic/dashboard" class="btn btn-outline-secondary">Decline</a>
+        `;
+      } else if (booking.status === 'accepted') {
+        actionButtons.innerHTML += `
+          <form action="/mechanic/booking/${booking._id}/start" method="POST" style="display: inline;">
+            <button type="submit" class="btn btn-primary">Start Service</button>
+          </form>
+        `;
+      } else if (booking.status === 'in-progress') {
+        actionButtons.innerHTML += `
+          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeServiceModal">Complete Service</button>
+        `;
+        document.getElementById('location-map-card').style.display = 'block';
+        document.getElementById('job-progress-alert').style.display = 'block';
+      } else if (booking.status === 'completed') {
+        document.getElementById('job-info-alert').style.display = 'block';
+        document.getElementById('job-info-text').textContent = 'This job has been completed successfully.';
+      }
+
+      // Chat link
+      if (chat) {
+        document.getElementById('chat-customer-btn').style.display = 'block';
+        document.getElementById('chat-customer-btn').href = `/chat/${chat._id}`;
+      }
+
+      // Job location address
+      document.getElementById('job-location-address').textContent = booking.location.address;
+
+      // Modal form
+      document.getElementById('complete-form').action = `/mechanic/booking/${booking._id}/complete`;
+      document.getElementById('amount').value = profile.hourlyRate;
+
+      // Timeline
+      buildTimeline(booking);
+
+      // Maps
+      initMaps(booking, user);
+
+      // Flash messages
+      if (data.flash.success_msg.length > 0) {
+        // Handle success messages
+      }
+      if (data.flash.error_msg.length > 0) {
+        // Handle error messages
+      }
+
+    } catch (error) {
+      console.error('Error loading booking details:', error);
+      alert('Failed to load booking details');
+    }
+  });
+
+  function getStatusColor(status) {
+    switch (status) {
+      case 'pending': return 'warning';
+      case 'accepted': return 'info';
+      case 'in-progress': return 'primary';
+      case 'completed': return 'success';
+      case 'cancelled': return 'danger';
+      default: return 'secondary';
+    }
+  }
+
+  function buildTimeline(booking) {
+    const timeline = document.getElementById('timeline');
+    timeline.innerHTML = '';
+
+    // Job Created
+    timeline.innerHTML += `
+      <li class="timeline-item">
+        <div class="timeline-marker bg-success"></div>
+        <div class="timeline-content p-3">
+          <h6 class="mb-1">Job Created</h6>
+          <p class="small text-muted mb-0">${new Date(booking.createdAt).toLocaleString()}</p>
+        </div>
+      </li>
+    `;
+
+    if (booking.status !== 'pending') {
+      timeline.innerHTML += `
+        <li class="timeline-item">
+          <div class="timeline-marker bg-success"></div>
+          <div class="timeline-content p-3">
+            <h6 class="mb-1">Job Accepted</h6>
+            <p class="small text-muted mb-0">You accepted this job</p>
+          </div>
+        </li>
+      `;
+    }
+
+    if (booking.status === 'in-progress' || booking.status === 'completed') {
+      timeline.innerHTML += `
+        <li class="timeline-item">
+          <div class="timeline-marker bg-success"></div>
+          <div class="timeline-content p-3">
+            <h6 class="mb-1">Service Started</h6>
+            <p class="small text-muted mb-0">You started working on this job</p>
+          </div>
+        </li>
+      `;
+    }
+
+    if (booking.status === 'completed') {
+      timeline.innerHTML += `
+        <li class="timeline-item">
+          <div class="timeline-marker bg-success"></div>
+          <div class="timeline-content p-3">
+            <h6 class="mb-1">Service Completed</h6>
+            <p class="small text-muted mb-0">You completed this job</p>
+          </div>
+        </li>
+        <li class="timeline-item">
+          <div class="timeline-marker ${booking.payment && booking.payment.status === 'completed' ? 'bg-success' : 'bg-warning'}"></div>
+          <div class="timeline-content p-3">
+            <h6 class="mb-1">Payment</h6>
+            <p class="small text-${booking.payment && booking.payment.status === 'completed' ? 'success' : 'warning'} mb-0">${booking.payment && booking.payment.status === 'completed' ? 'Payment received' : 'Payment pending'}</p>
+          </div>
+        </li>
+      `;
+    }
+
+    if (booking.status === 'cancelled') {
+      timeline.innerHTML += `
+        <li class="timeline-item">
+          <div class="timeline-marker bg-danger"></div>
+          <div class="timeline-content p-3">
+            <h6 class="mb-1">Booking Cancelled</h6>
+            <p class="small text-muted mb-0">This job was cancelled</p>
+          </div>
+        </li>
+      `;
+    }
+  }
+
+  function initMaps(booking, user) {
+    // Booking location map
+    const bookingMap = L.map('booking-map').setView([
+      booking.location.coordinates[1],
+      booking.location.coordinates[0]
+    ], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(bookingMap);
+
+    L.marker([
+      booking.location.coordinates[1],
+      booking.location.coordinates[0]
+    ]).addTo(bookingMap)
+      .bindPopup('Job Location')
+      .openPopup();
+
+    if (booking.status === 'in-progress') {
+      // Location map for mechanic
+      const locationMap = L.map('location-map').setView([
+        booking.location.coordinates[1],
+        booking.location.coordinates[0]
+      ], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(locationMap);
+
+      const customerMarker = L.marker([
+        booking.location.coordinates[1],
+        booking.location.coordinates[0]
+      ]).addTo(locationMap)
+        .bindPopup('Customer Location')
+        .openPopup();
+
+      let mechanicMarker;
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          if (mechanicMarker) {
+            mechanicMarker.setLatLng([lat, lng]);
+          } else {
+            mechanicMarker = L.marker([lat, lng], {
+              icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34]
+              })
+            }).addTo(locationMap)
+              .bindPopup('Your Location')
+              .openPopup();
+          }
+
+          // Update location via socket if available
+          if (window.socket) {
+            window.socket.emit('update-location', {
+              coordinates: [lng, lat]
+            });
+          }
+
+          const latlngs = [
+            [lat, lng],
+            [booking.location.coordinates[1], booking.location.coordinates[0]]
+          ];
+          L.polyline(latlngs, {color: 'blue', dashArray: '5, 10'}).addTo(locationMap);
+          locationMap.fitBounds(latlngs);
+        }, function(error) {
+          console.error('Geolocation error:', error);
+        });
+
+        navigator.geolocation.watchPosition(function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          if (mechanicMarker) {
+            mechanicMarker.setLatLng([lat, lng]);
+          }
+
+          if (window.socket) {
+            window.socket.emit('update-location', {
+              coordinates: [lng, lat]
+            });
+          }
+        }, function(error) {
+          console.error('Geolocation error:', error);
+        }, {
+          enableHighAccuracy: true,
+          maximumAge: 30000,
+          timeout: 27000
+        });
+      }
+
+      // Add userId to body for socket
+      document.body.dataset.userId = user._id;
+    }
+  }
+</script>

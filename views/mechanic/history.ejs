@@ -11,9 +11,9 @@
       <div class="d-flex justify-content-between align-items-center">
         <h1 class="mb-0"><i class="fas fa-history text-primary me-2"></i>Job History</h1>
         <form action="/mechanic/toggle-availability" method="POST" class="d-inline">
-          <button type="submit" class="btn btn-<%= profile.availability ? 'success' : 'danger' %>">
-            <i class="fas fa-<%= profile.availability ? 'check-circle' : 'times-circle' %> me-2"></i>
-            <%= profile.availability ? 'Available for Jobs' : 'Currently Unavailable' %>
+          <button type="submit" class="btn btn-success" id="availability-btn">
+            <i class="fas fa-check-circle me-2"></i>
+            Available for Jobs
           </button>
         </form>
       </div>
@@ -88,85 +88,27 @@
           <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>All Jobs</h5>
         </div>
         <div class="card-body p-0">
-          <% if (bookings.length === 0) { %>
-            <div class="text-center py-5">
-              <img src="/images/empty-jobs.png" alt="No Jobs" class="img-fluid mb-3" style="max-width: 200px;">
-              <h5>No jobs found</h5>
-              <p class="text-muted">You haven't completed any jobs yet.</p>
-            </div>
-          <% } else { %>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle" id="jobsTable">
-                <thead class="table-light">
-                  <tr>
-                    <th>Date</th>
-                    <th>Customer</th>
-                    <th>Problem</th>
-                    <th>Status</th>
-                    <th>Payment</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% bookings.forEach(booking => { %>
-                    <tr data-status="<%= booking.status %>" data-category="<%= booking.problemCategory %>" data-date="<%= new Date(booking.createdAt).toISOString() %>">
-                      <td>
-                        <div class="d-flex flex-column">
-                          <span><%= new Date(booking.createdAt).toLocaleDateString() %></span>
-                          <small class="text-muted"><%= new Date(booking.createdAt).toLocaleTimeString() %></small>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <div class="avatar-circle bg-primary text-white me-2">
-                            <%= booking.user.name.charAt(0).toUpperCase() %>
-                          </div>
-                          <div>
-                            <span><%= booking.user.name %></span>
-                            <small class="d-block text-muted"><%= booking.user.phone %></small>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span class="d-inline-block text-truncate" style="max-width: 150px;" title="<%= booking.problemCategory %>">
-                          <%= booking.problemCategory %>
-                        </span>
-                      </td>
-                      <td>
-                        <span class="booking-status status-<%= booking.status %>">
-                          <%= booking.status %>
-                        </span>
-                      </td>
-                      <td>
-                        <% if (booking.status === 'completed') { %>
-                          <% if (booking.payment && booking.payment.status === 'completed') { %>
-                            <span class="badge bg-success">Paid</span>
-                            <span class="d-block text-success fw-bold mt-1">$<%= booking.payment.amount.toFixed(2) %></span>
-                          <% } else { %>
-                            <span class="badge bg-warning text-dark">Pending</span>
-                          <% } %>
-                        <% } else { %>
-                          <span class="badge bg-secondary">N/A</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <div class="btn-group">
-                          <a href="/mechanic/booking/<%= booking._id %>" class="btn btn-sm btn-primary">
-                            <i class="fas fa-eye"></i> View
-                          </a>
-                          <% if (['accepted', 'in-progress'].includes(booking.status)) { %>
-                            <a href="/chat/<%= booking._id %>" class="btn btn-sm btn-info">
-                              <i class="fas fa-comments"></i> Chat
-                            </a>
-                          <% } %>
-                        </div>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
-          <% } %>
+          <div id="empty-jobs" class="text-center py-5" style="display: none;">
+            <img src="/images/empty-jobs.png" alt="No Jobs" class="img-fluid mb-3" style="max-width: 200px;">
+            <h5>No jobs found</h5>
+            <p class="text-muted">You haven't completed any jobs yet.</p>
+          </div>
+          <div class="table-responsive" id="jobs-table-container" style="display: none;">
+            <table class="table table-hover align-middle" id="jobsTable">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Problem</th>
+                  <th>Status</th>
+                  <th>Payment</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-tbody">
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -205,9 +147,123 @@
     const dateFromFilter = document.getElementById('dateFrom');
     const dateToFilter = document.getElementById('dateTo');
     const applyFiltersBtn = document.getElementById('applyFilters');
-    const jobsTable = document.getElementById('jobsTable');
-    const tableRows = jobsTable ? jobsTable.querySelectorAll('tbody tr') : [];
-    
+    const availabilityBtn = document.getElementById('availability-btn');
+    const emptyJobs = document.getElementById('empty-jobs');
+    const jobsTableContainer = document.getElementById('jobs-table-container');
+    const jobsTbody = document.getElementById('jobs-tbody');
+
+    let bookingsData = [];
+
+    // Fetch profile for availability
+    fetch('/mechanic/api/profile')
+      .then(response => response.json())
+      .then(data => {
+        const profile = data.profile;
+        const isAvailable = profile.availability;
+        availabilityBtn.className = 'btn btn-' + (isAvailable ? 'success' : 'danger');
+        availabilityBtn.innerHTML = '<i class="fas fa-' + (isAvailable ? 'check-circle' : 'times-circle') + ' me-2"></i>' +
+          (isAvailable ? 'Available for Jobs' : 'Currently Unavailable');
+      })
+      .catch(error => {
+        console.error('Error fetching profile:', error);
+      });
+
+    // Fetch bookings
+    fetch('/mechanic/api/history')
+      .then(response => response.json())
+      .then(data => {
+        bookingsData = data.bookings || [];
+        renderBookings(bookingsData);
+        initCharts();
+      })
+      .catch(error => {
+        console.error('Error fetching history:', error);
+        renderBookings([]);
+        initCharts();
+      });
+
+    function renderBookings(bookings) {
+      if (bookings.length === 0) {
+        emptyJobs.style.display = 'block';
+        jobsTableContainer.style.display = 'none';
+        return;
+      }
+
+      emptyJobs.style.display = 'none';
+      jobsTableContainer.style.display = 'block';
+      jobsTbody.innerHTML = '';
+
+      bookings.forEach(booking => {
+        const row = jobsTbody.insertRow();
+        row.setAttribute('data-status', booking.status);
+        row.setAttribute('data-category', booking.problemCategory);
+        row.setAttribute('data-date', new Date(booking.createdAt).toISOString());
+
+        const dateCell = row.insertCell();
+        dateCell.innerHTML = `
+          <div class="d-flex flex-column">
+            <span>${new Date(booking.createdAt).toLocaleDateString()}</span>
+            <small class="text-muted">${new Date(booking.createdAt).toLocaleTimeString()}</small>
+          </div>
+        `;
+
+        const customerCell = row.insertCell();
+        customerCell.innerHTML = `
+          <div class="d-flex align-items-center">
+            <div class="avatar-circle bg-primary text-white me-2">
+              ${booking.user.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <span>${booking.user.name}</span>
+              <small class="d-block text-muted">${booking.user.phone}</small>
+            </div>
+          </div>
+        `;
+
+        const problemCell = row.insertCell();
+        problemCell.innerHTML = `
+          <span class="d-inline-block text-truncate" style="max-width: 150px;" title="${booking.problemCategory}">
+            ${booking.problemCategory}
+          </span>
+        `;
+
+        const statusCell = row.insertCell();
+        statusCell.innerHTML = `
+          <span class="booking-status status-${booking.status}">
+            ${booking.status}
+          </span>
+        `;
+
+        const paymentCell = row.insertCell();
+        if (booking.status === 'completed') {
+          if (booking.payment && booking.payment.status === 'completed') {
+            paymentCell.innerHTML = `
+              <span class="badge bg-success">Paid</span>
+              <span class="d-block text-success fw-bold mt-1">$${booking.payment.amount.toFixed(2)}</span>
+            `;
+          } else {
+            paymentCell.innerHTML = '<span class="badge bg-warning text-dark">Pending</span>';
+          }
+        } else {
+          paymentCell.innerHTML = '<span class="badge bg-secondary">N/A</span>';
+        }
+
+        const actionCell = row.insertCell();
+        actionCell.innerHTML = `
+          <div class="btn-group">
+            <a href="/mechanic/booking/${booking._id}" class="btn btn-sm btn-primary">
+              <i class="fas fa-eye"></i> View
+            </a>
+            ${['accepted', 'in-progress'].includes(booking.status) ? `
+              <a href="/chat/${booking._id}" class="btn btn-sm btn-info">
+                <i class="fas fa-comments"></i> Chat
+              </a>
+            ` : ''}
+          </div>
+        `;
+      });
+    }
+
     // Apply filters function
     function applyFilters() {
       const searchTerm = searchInput.value.toLowerCase();
@@ -215,17 +271,19 @@
       const categoryValue = categoryFilter.value;
       const dateFromValue = dateFromFilter.value ? new Date(dateFromFilter.value) : null;
       const dateToValue = dateToFilter.value ? new Date(dateToFilter.value) : null;
-      
+
+      const tableRows = document.querySelectorAll('#jobs-tbody tr');
+
       tableRows.forEach(row => {
         const status = row.getAttribute('data-status');
         const category = row.getAttribute('data-category');
         const date = new Date(row.getAttribute('data-date'));
         const rowText = row.textContent.toLowerCase();
-        
+
         const statusMatch = statusValue === 'all' || status === statusValue;
         const categoryMatch = categoryValue === 'all' || category === categoryValue;
         const searchMatch = !searchTerm || rowText.includes(searchTerm);
-        
+
         let dateMatch = true;
         if (dateFromValue && dateToValue) {
           dateMatch = date >= dateFromValue && date <= dateToValue;
@@ -234,7 +292,7 @@
         } else if (dateToValue) {
           dateMatch = date <= dateToValue;
         }
-        
+
         if (statusMatch && categoryMatch && searchMatch && dateMatch) {
           row.style.display = '';
         } else {
@@ -242,12 +300,12 @@
         }
       });
     }
-    
+
     // Event listeners
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener('click', applyFilters);
     }
-    
+
     if (searchInput) {
       searchInput.addEventListener('keyup', function(e) {
         if (e.key === 'Enter') {
@@ -255,131 +313,133 @@
         }
       });
     }
-    
-    // Initialize charts
-    if (document.getElementById('categoryChart')) {
-      // Prepare data for category chart
-      const categories = {};
-      tableRows.forEach(row => {
-        const category = row.getAttribute('data-category');
-        if (!categories[category]) {
-          categories[category] = 0;
-        }
-        categories[category]++;
-      });
-      
-      const categoryLabels = Object.keys(categories);
-      const categoryData = Object.values(categories);
-      
-      const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-      new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: {
-          labels: categoryLabels,
-          datasets: [{
-            data: categoryData,
-            backgroundColor: [
-              '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0',
-              '#4895ef', '#560bad', '#f3722c', '#f8961e', '#90be6d'
-            ],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 12,
-                padding: 15
-              }
-            }
+
+    function initCharts() {
+      const tableRows = document.querySelectorAll('#jobs-tbody tr');
+
+      // Initialize category chart
+      if (document.getElementById('categoryChart')) {
+        const categories = {};
+        tableRows.forEach(row => {
+          const category = row.getAttribute('data-category');
+          if (!categories[category]) {
+            categories[category] = 0;
+          }
+          categories[category]++;
+        });
+
+        const categoryLabels = Object.keys(categories);
+        const categoryData = Object.values(categories);
+
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+          type: 'doughnut',
+          data: {
+            labels: categoryLabels,
+            datasets: [{
+              data: categoryData,
+              backgroundColor: [
+                '#4361ee', '#3a0ca3', '#7209b7', '#f72585', '#4cc9f0',
+                '#4895ef', '#560bad', '#f3722c', '#f8961e', '#90be6d'
+              ],
+              borderWidth: 0
+            }]
           },
-          cutout: '70%'
-        }
-      });
-    }
-    
-    if (document.getElementById('earningsChart')) {
-      // Prepare data for earnings chart (last 6 months)
-      const months = [];
-      const earnings = [];
-      
-      // Get last 6 months
-      for (let i = 5; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        months.push(date.toLocaleString('default', { month: 'short' }));
-        earnings.push(0); // Initialize with 0
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  boxWidth: 12,
+                  padding: 15
+                }
+              }
+            },
+            cutout: '70%'
+          }
+        });
       }
-      
-      // Calculate earnings for each month
-      tableRows.forEach(row => {
-        const date = new Date(row.getAttribute('data-date'));
-        const status = row.getAttribute('data-status');
-        
-        if (status === 'completed') {
-          const paymentCell = row.querySelector('td:nth-child(5)');
-          if (paymentCell) {
-            const paymentText = paymentCell.textContent;
-            const match = paymentText.match(/\\$([0-9.]+)/);
-            if (match) {
-              const amount = parseFloat(match[1]);
-              
-              // Check if date is within last 6 months
-              const currentDate = new Date();
-              const sixMonthsAgo = new Date();
-              sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
-              
-              if (date >= sixMonthsAgo) {
-                const monthIndex = currentDate.getMonth() - date.getMonth();
-                const normalizedIndex = monthIndex < 0 ? monthIndex + 12 : monthIndex;
-                if (normalizedIndex < 6) {
-                  earnings[5 - normalizedIndex] += amount;
+
+      // Initialize earnings chart
+      if (document.getElementById('earningsChart')) {
+        const months = [];
+        const earnings = [];
+
+        // Get last 6 months
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
+          months.push(date.toLocaleString('default', { month: 'short' }));
+          earnings.push(0);
+        }
+
+        // Calculate earnings for each month
+        tableRows.forEach(row => {
+          const date = new Date(row.getAttribute('data-date'));
+          const status = row.getAttribute('data-status');
+
+          if (status === 'completed') {
+            const paymentCell = row.querySelector('td:nth-child(5)');
+            if (paymentCell) {
+              const paymentText = paymentCell.textContent;
+              const match = paymentText.match(/\$([0-9.]+)/);
+              if (match) {
+                const amount = parseFloat(match[1]);
+
+                const currentDate = new Date();
+                const sixMonthsAgo = new Date();
+                sixMonthsAgo.setMonth(currentDate.getMonth() - 5);
+
+                if (date >= sixMonthsAgo) {
+                  const monthIndex = currentDate.getMonth() - date.getMonth();
+                  const normalizedIndex = monthIndex < 0 ? monthIndex + 12 : monthIndex;
+                  if (normalizedIndex < 6) {
+                    earnings[5 - normalizedIndex] += amount;
+                  }
                 }
               }
             }
           }
-        }
-      });
-      
-      const earningsCtx = document.getElementById('earningsChart').getContext('2d');
-      new Chart(earningsCtx, {
-        type: 'line',
-        data: {
-          labels: months,
-          datasets: [{
-            label: 'Earnings',
-            data: earnings,
-            borderColor: '#4361ee',
-            backgroundColor: 'rgba(67, 97, 238, 0.1)',
-            borderWidth: 2,
-            tension: 0.3,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
+        });
+
+        const earningsCtx = document.getElementById('earningsChart').getContext('2d');
+        new Chart(earningsCtx, {
+          type: 'line',
+          data: {
+            labels: months,
+            datasets: [{
+              label: 'Earnings',
+              data: earnings,
+              borderColor: '#4361ee',
+              backgroundColor: 'rgba(67, 97, 238, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }]
           },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function(value) {
-                  return '$' + value;
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return '$' + value;
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      }
     }
   });
 </script>
