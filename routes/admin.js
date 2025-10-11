@@ -6,7 +6,7 @@ const Booking = require("../models/Booking")
 const Subscription = require("../models/Subscription")
 
 // Admin dashboard
-// Admin dashboard
+
 router.get("/dashboard", async (req, res) => {
   try {
     // Get counts
@@ -80,78 +80,78 @@ router.get("/dashboard", async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5)
 
-      // monthly revenue with booking + subscription
-      // Monthly Revenue Stats - Bookings
-const bookingMonthlyRevenue = await Booking.aggregate([
-  {
-    $match: {
-      status: "completed",
-      "payment.status": "completed",
-    },
-  },
-  {
-    $group: {
-      _id: {
-        year: { $year: "$createdAt" },
-        month: { $month: "$createdAt" },
+    // monthly revenue with booking + subscription
+    // Monthly Revenue Stats - Bookings
+    const bookingMonthlyRevenue = await Booking.aggregate([
+      {
+        $match: {
+          status: "completed",
+          "payment.status": "completed",
+        },
       },
-      total: { $sum: "$payment.amount" },
-    },
-  },
-  {
-    $sort: { "_id.year": 1, "_id.month": 1 },
-  },
-])
-
-// Monthly Revenue Stats - Subscriptions
-const subscriptionMonthlyRevenue = await Subscription.aggregate([
-  {
-    $match: {
-      status: "active",
-    },
-  },
-  {
-    $group: {
-      _id: {
-        year: { $year: "$createdAt" },
-        month: { $month: "$createdAt" },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          total: { $sum: "$payment.amount" },
+        },
       },
-      total: { $sum: "$amount" },
-    },
-  },
-  {
-    $sort: { "_id.year": 1, "_id.month": 1 },
-  },
-])
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+    ])
 
-// Combine both sources into a unified revenue map
-const monthlyRevenueMap = {}
+    // Monthly Revenue Stats - Subscriptions
+    const subscriptionMonthlyRevenue = await Subscription.aggregate([
+      {
+        $match: {
+          status: "active",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          total: { $sum: "$amount" },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 },
+      },
+    ])
 
-bookingMonthlyRevenue.forEach(({ _id, total }) => {
-  const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
-  monthlyRevenueMap[key] = { booking: total, subscription: 0 }
-})
+    // Combine both sources into a unified revenue map
+    const monthlyRevenueMap = {}
 
-subscriptionMonthlyRevenue.forEach(({ _id, total }) => {
-  const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
-  if (!monthlyRevenueMap[key]) {
-    monthlyRevenueMap[key] = { booking: 0, subscription: total }
-  } else {
-    monthlyRevenueMap[key].subscription = total
-  }
-})
+    bookingMonthlyRevenue.forEach(({ _id, total }) => {
+      const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
+      monthlyRevenueMap[key] = { booking: total, subscription: 0 }
+    })
 
-// Format the final monthly revenue chart data
-const monthlyRevenueStats = Object.keys(monthlyRevenueMap).map((month) => {
-  return {
-    month, // Format: "2025-04"
-    booking: monthlyRevenueMap[month].booking,
-    subscription: monthlyRevenueMap[month].subscription,
-    total: monthlyRevenueMap[month].booking + monthlyRevenueMap[month].subscription,
-  }
-}).sort((a, b) => a.month.localeCompare(b.month)) // Ensure chronological order
+    subscriptionMonthlyRevenue.forEach(({ _id, total }) => {
+      const key = `${_id.year}-${String(_id.month).padStart(2, "0")}`
+      if (!monthlyRevenueMap[key]) {
+        monthlyRevenueMap[key] = { booking: 0, subscription: total }
+      } else {
+        monthlyRevenueMap[key].subscription = total
+      }
+    })
 
-console.log("Monthly Revenue Stats:", monthlyRevenueStats)
+    // Format the final monthly revenue chart data
+    const monthlyRevenueStats = Object.keys(monthlyRevenueMap).map((month) => {
+      return {
+        month, // Format: "2025-04"
+        booking: monthlyRevenueMap[month].booking,
+        subscription: monthlyRevenueMap[month].subscription,
+        total: monthlyRevenueMap[month].booking + monthlyRevenueMap[month].subscription,
+      }
+    }).sort((a, b) => a.month.localeCompare(b.month)) // Ensure chronological order
+
+    console.log("Monthly Revenue Stats:", monthlyRevenueStats)
 
     res.render("admin/dashboard", {
       title: "Admin Dashboard",
