@@ -7,15 +7,16 @@ module.exports = (io) => {
   const onlineUsers = {};
 
   io.on("connection", (socket) => {
-    console.log("New client connected");
+  console.log("New client connected");
 
-
-    socket.on("authenticate", async (userId) => {
+  socket.on("authenticate", async (userId) => {
       try {
         const user = await User.findById(userId);
         if (user) {
           socket.userId = userId;
           onlineUsers[userId] = socket.id;
+          // join a room named after the userId so server can emit directly to this user
+          try { socket.join(userId); } catch (e) { /* no-op */ }
           console.log(`User ${userId} authenticated`);
 
           // Notify relevant users that this user is online
