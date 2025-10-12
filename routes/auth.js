@@ -39,12 +39,34 @@ router.get("/pending-approval", (req, res) => {
 
 // Login handle
 router.post("/login", (req, res, next) => {
-  passport.authenticate("local", {
-    successRedirect: "/auth/redirect",
-    failureRedirect: "/auth/login",
-    failureFlash: true,
-  })(req, res, next)
-})
+  passport.authenticate("local", (err, user, info) => {
+    if (err) {
+      console.error("Auth error:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+
+    if (!user) {
+      return res.status(400).json({ message: info?.message || "Invalid credentials" });
+    }
+
+    req.logIn(user, (err) => {
+      if (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({ message: "Login failed" });
+      }
+
+      // ✅ Send JSON response for frontend
+      return res.json({
+        message: "Login successful",
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+        },
+      });
+    });
+  })(req, res, next);
+});
 
 // Redirect based on role
 router.get("/redirect", isAuthenticated, (req, res) => {

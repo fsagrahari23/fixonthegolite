@@ -11,8 +11,8 @@
               <i class="fas fa-user"></i>
             </div>
           </div>
-          
-          <form action="/auth/login" method="POST">
+
+          <form id="loginForm">
             <div class="mb-3">
               <label for="email" class="form-label">Email Address</label>
               <div class="input-group">
@@ -20,7 +20,7 @@
                 <input type="email" class="form-control" id="email" name="email" placeholder="example@example.com" required>
               </div>
             </div>
-            
+
             <div class="mb-4">
               <label for="password" class="form-label">Password</label>
               <div class="input-group">
@@ -28,14 +28,18 @@
                 <input type="password" class="form-control" id="password" name="password" placeholder="Abcd1234" required>
               </div>
             </div>
-            
+
             <div class="d-grid">
               <button type="submit" class="btn btn-primary btn-lg">
                 <i class="fas fa-sign-in-alt me-2"></i> Login
               </button>
             </div>
           </form>
+
+          <!-- Feedback message -->
+          <div id="messageBox" class="text-center mt-3"></div>
         </div>
+
         <div class="card-footer bg-light py-3">
           <div class="text-center">
             <p class="mb-0">Don't have an account?</p>
@@ -67,3 +71,62 @@
   }
 </style>
 
+<script>
+  // Clear inputs when page loads
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+  });
+
+  const loginForm = document.getElementById('loginForm');
+  const messageBox = document.getElementById('messageBox');
+
+  loginForm.addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    // Get input values
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    // Simple validation
+    if (!email || !password) {
+      showMessage('Please fill all fields!', 'danger');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        showMessage('Login successful! Redirecting...', 'success');
+        localStorage.setItem('token', result.token);
+
+        setTimeout(() => {
+          window.location.href = '/user/dashboard'; // Redirect after successful login
+        }, 1500);
+      } else {
+        showMessage(result.message || 'Invalid credentials', 'danger');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      showMessage('Something went wrong. Please try again.', 'danger');
+    }
+  });
+
+  function showMessage(message, type) {
+    messageBox.innerHTML = `
+      <div class="alert alert-${type} mt-3" role="alert">
+        ${message}
+      </div>
+    `;
+    setTimeout(() => (messageBox.innerHTML = ''), 3000);
+  }
+</script>
