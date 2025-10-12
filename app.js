@@ -135,4 +135,10 @@ function startWithFallback(basePort, maxTries) {
   tryListen(basePort);
 }
 
-startWithFallback(BASE_PORT, MAX_PORT_TRIES);
+// Only start the HTTP listener when not running in test mode
+if (process.env.NODE_ENV !== 'test') {
+  startWithFallback(BASE_PORT, MAX_PORT_TRIES);
+}
+
+// Export app (and server) for testing
+module.exports = app;
