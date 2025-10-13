@@ -110,35 +110,10 @@ app.get("/", (req, res) => {
 // Socket.io setup
 require("./socket")(io);
 
-// Start server with simple port fallback to avoid EADDRINUSE
-const BASE_PORT = parseInt(process.env.PORT, 10) || 3000;
-const MAX_PORT_TRIES = 5;
 
-function startWithFallback(basePort, maxTries) {
-  let attempt = 0;
-  function tryListen(port) {
-    server.listen(port, () => {
-      console.log(`Server running on port ${port}`);
-    });
-  }
+// Start server
+const PORT =  3001;
+server.listen(PORT, () => {
 
-  server.on("error", (err) => {
-    if (err && err.code === "EADDRINUSE" && attempt < maxTries) {
-      const nextPort = basePort + (++attempt);
-      console.warn(`Port ${nextPort - 1} in use, retrying on ${nextPort}...`);
-      setTimeout(() => tryListen(nextPort), 300);
-    } else {
-      throw err;
-    }
-  });
-
-  tryListen(basePort);
-}
-
-// Only start the HTTP listener when not running in test mode
-if (process.env.NODE_ENV !== 'test') {
-  startWithFallback(BASE_PORT, MAX_PORT_TRIES);
-}
-
-// Export app (and server) for testing
-module.exports = app;
+  console.log(`Server running on http://localhost:${PORT}`);
+});

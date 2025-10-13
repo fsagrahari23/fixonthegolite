@@ -95,7 +95,7 @@
     }
 
     try {
-      const response = await fetch('http://localhost:3000/auth/login', {
+      const response = await fetch('http://localhost:3001/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -108,9 +108,17 @@
       if (response.ok) {
         showMessage('Login successful! Redirecting...', 'success');
         localStorage.setItem('token', result.token);
+// send on the basis of role 
 
         setTimeout(() => {
-          window.location.href = '/user/dashboard'; // Redirect after successful login
+          const userRole = result.user.role; // Get the user's role from the response
+          if (userRole === 'mechanic') {
+            window.location.href = '/mechanic/dashboard'; // Redirect to mechanic dashboard
+          } else if (userRole === 'admin') {
+            window.location.href = '/admin/dashboard'; // Redirect to admin dashboard
+          } else {
+            window.location.href = '/user/dashboard'; // Redirect to user dashboard
+          }
         }, 1500);
       } else {
         showMessage(result.message || 'Invalid credentials', 'danger');

@@ -99,7 +99,7 @@ router.get("/api/dashboard", async (req, res) => {
 
 // View booking details
 router.get('/booking/:id', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/mechanic/booking-details.html'));
+  res.render("mechanic/booking-details", { title: "Booking Details" });
 });
 
 // API: booking details
