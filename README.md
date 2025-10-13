@@ -1,4 +1,4 @@
-# Bike Assistance System - Comprehensive Documentation
+# Vehicle Assistance System - Comprehensive Documentation
 
 ## Project Information
 
