@@ -44,7 +44,7 @@
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <div class="d-flex align-items-center">
-                <div class="avatar-circle-sm bg-white text-primary me-2">
+                <div class="avatar-circle-sm border-radius: 100 text-primary me-2"  style="background-color: white; border: 2px solid currentColor; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                   <%= user.name.charAt(0).toUpperCase() %>
                 </div>
                 <span class="d-none d-md-inline"><%= user.name %></span>
@@ -54,7 +54,7 @@
               <li>
                 <div class="dropdown-item-text">
                   <div class="d-flex align-items-center">
-                    <div class="avatar-circle bg-primary text-white me-2">
+                    <div class="avatar-circle bg-primary text-white me-2" style="background-color: white; border: 2px solid currentColor; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                       <%= user.name.charAt(0).toUpperCase() %>
                     </div>
                     <div>
