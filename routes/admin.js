@@ -844,6 +844,50 @@ router.post("/subscription/:id/update", async (req, res) => {
   }
 })
 
+// Cancel subscription (Admin action from subscriptions list)
+router.post("/subscription/:id/cancel", async (req, res) => {
+  try {
+    const { id } = req.params
+    const subscription = await Subscription.findById(id)
+
+    if (!subscription) {
+      req.flash("error_msg", "Subscription not found")
+      return res.redirect("/admin/subscriptions")
+    }
+
+    if (subscription.status === "cancelled") {
+      req.flash("info_msg", "Subscription is already cancelled")
+      return res.redirect("/admin/subscriptions")
+    }
+
+    // Update subscription status to cancelled
+    subscription.status = "cancelled"
+    subscription.cancelledAt = new Date()
+    await subscription.save()
+
+    // Ensure user's premium status is updated (defensive even though post-save hook exists)
+    await User.findByIdAndUpdate(subscription.user, {
+      isPremium: false,
+      premiumTier: "none",
+      premiumFeatures: {
+        priorityService: false,
+        tracking: false,
+        discounts: 0,
+        emergencyAssistance: false,
+        freeTowing: 0,
+        maintenanceChecks: false,
+      },
+    })
+
+    req.flash("success_msg", "Subscription cancelled successfully")
+    return res.redirect("/admin/subscriptions")
+  } catch (error) {
+    console.error("Cancel subscription (admin) error:", error)
+    req.flash("error_msg", "Failed to cancel subscription")
+    return res.redirect("/admin/subscriptions")
+  }
+})
+
 // View premium users
 router.get("/premium-users", async (req, res) => {
   try {
