@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit"
   },
   "keywords": [],
   "author": "",
@@ -33,5 +33,15 @@
     "socketio": "^1.0.0",
     "stripe": "^17.7.0",
     "twilio": "^5.9.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.1.4",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testTimeout": 30000
   }
 }
