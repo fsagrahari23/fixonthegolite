@@ -1,5 +1,18 @@
 # Bike Assistance System - Comprehensive Documentation
 
+## Project Information
+
+- **Group ID**: 28
+- **Project Title**: fixOnTheGo
+- **Single Point of Contact (SPOC)**:
+  - Gautam Chauhan (S20230010089) -> gautam.c23@iiits.in
+- **Team Members & Roles**:
+  - Vasudev Dilware (S20230010253) -> Mechanic Dashboard
+  - Gautam Chauhan (S20230010089) -> Admin dashboard
+  - Monu Agrahari (S20230010148) -> User dashboard, workflow and Database management
+  - Geeda Sai Vyshnav (S20230010090) -> Authorisation and Role based Authentication
+  - Guna Shekhar (S20230010155) -> Payments and Subscriptions
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Overview](#project-overview)
