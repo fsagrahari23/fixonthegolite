@@ -450,6 +450,43 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 });
 
+// Helper: return labels for the last N months in YYYY-MM (oldest -> newest)
+function getLastNMonthsLabels(n = 6) {
+  const labels = [];
+  const now = new Date();
+  // Go back n-1 months so array ends at current month
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    labels.push(`${y}-${m}`);
+  }
+  return labels;
+}
+
+// Helper: map API monthlyRevenueStats into arrays aligned with given labels
+// stats: [{ month: 'YYYY-MM', booking: number, subscription: number }]
+function mapRevenueSeries(stats, labels) {
+  const map = new Map();
+  (stats || []).forEach(item => {
+    if (item && item.month) {
+      map.set(item.month, {
+        booking: Number(item.booking || 0),
+        subscription: Number(item.subscription || 0)
+      });
+    }
+  });
+
+  const booking = [];
+  const subscription = [];
+  labels.forEach(lbl => {
+    const v = map.get(lbl) || { booking: 0, subscription: 0 };
+    booking.push(v.booking);
+    subscription.push(v.subscription);
+  });
+  return { booking, subscription };
+}
+
 function updateCharts(data) {
   // Booking stats chart
   const bookingCtx = document.getElementById('bookingStatsChart');
@@ -545,7 +582,9 @@ function updateCharts(data) {
               backgroundColor: 'rgba(0, 180, 216, 0.1)',
               borderWidth: 2,
               tension: 0.4,
-              fill: true
+              fill: true,
+              pointRadius: 3,
+              pointHoverRadius: 5
             },
             {
               label: 'Subscription Revenue',
@@ -554,7 +593,9 @@ function updateCharts(data) {
               backgroundColor: 'rgba(241, 91, 181, 0.1)',
               borderWidth: 2,
               tension: 0.4,
-              fill: true
+              fill: true,
+              pointRadius: 3,
+              pointHoverRadius: 5
             }
           ]
         },
@@ -585,20 +626,22 @@ function updateCharts(data) {
                 text: 'Month'
               }
             }
-          }
+          },
+          spanGaps: true
         }
       });
     }
-    if (data.monthlyRevenueStats) {
-      const labels = data.monthlyRevenueStats.map(item => item.month);
-      const bookingRevenue = data.monthlyRevenueStats.map(item => item.booking);
-      const subscriptionRevenue = data.monthlyRevenueStats.map(item => item.subscription);
+    // Always display at least the last 6 months for better visibility
+    const baseLabels = getLastNMonthsLabels(6);
+    const { booking: bookingRevenue, subscription: subscriptionRevenue } = mapRevenueSeries(
+      data.monthlyRevenueStats || [],
+      baseLabels
+    );
 
-      revenueCtx.chart.data.labels = labels;
-      revenueCtx.chart.data.datasets[0].data = bookingRevenue;
-      revenueCtx.chart.data.datasets[1].data = subscriptionRevenue;
-      revenueCtx.chart.update();
-    }
+    revenueCtx.chart.data.labels = baseLabels;
+    revenueCtx.chart.data.datasets[0].data = bookingRevenue;
+    revenueCtx.chart.data.datasets[1].data = subscriptionRevenue;
+    revenueCtx.chart.update();
   }
 }
 </script>

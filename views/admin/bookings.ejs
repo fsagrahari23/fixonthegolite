@@ -197,6 +197,35 @@
     let bookingsData = [];
     let categoryChart, trendChart;
 
+    // Helpers for trend chart
+    function formatDateYYYYMMDD(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getLastNDaysLabels(n = 7) {
+      const labels = [];
+      const today = new Date();
+      for (let i = n - 1; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        labels.push(formatDateYYYYMMDD(d));
+      }
+      return labels;
+    }
+
+    function mapTrendSeries(items, labels) {
+      const map = new Map();
+      (items || []).forEach(it => {
+        if (it && typeof it._id === 'string') {
+          map.set(it._id, Number(it.count || 0));
+        }
+      });
+      return labels.map(l => map.get(l) || 0);
+    }
+
     // Fetch bookings data from API
     async function fetchBookings() {
       try {
@@ -425,10 +454,10 @@
         });
       }
 
-      // Trend chart
-      if (document.getElementById('trendChart') && bookingTrends) {
-        const trendLabels = bookingTrends.map(item => item._id);
-        const trendData = bookingTrends.map(item => item.count);
+      // Trend chart (always show last 7 days, zero-filled)
+      if (document.getElementById('trendChart')) {
+        const baseLabels = getLastNDaysLabels(7);
+        const trendData = mapTrendSeries(bookingTrends || [], baseLabels);
 
         const trendCtx = document.getElementById('trendChart').getContext('2d');
         if (trendChart) {
@@ -437,7 +466,7 @@
         trendChart = new Chart(trendCtx, {
           type: 'line',
           data: {
-            labels: trendLabels,
+            labels: baseLabels,
             datasets: [{
               label: 'Bookings',
               data: trendData,
@@ -445,7 +474,9 @@
               backgroundColor: 'rgba(67, 97, 238, 0.1)',
               borderWidth: 2,
               tension: 0.3,
-              fill: true
+              fill: true,
+              pointRadius: 3,
+              pointHoverRadius: 5
             }]
           },
           options: {
@@ -461,6 +492,12 @@
                 beginAtZero: true,
                 ticks: {
                   precision: 0
+                }
+              },
+              x: {
+                ticks: {
+                  maxRotation: 45,
+                  minRotation: 0
                 }
               }
             }
