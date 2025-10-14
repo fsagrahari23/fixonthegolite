@@ -10,6 +10,7 @@ const methodOverride = require("method-override");
 const passport = require("passport");
 const fileUpload = require("express-fileupload");
 const expressLayouts = require("express-ejs-layouts");
+const cors = require("cors");
 require("dotenv").config();
 
 // Import routes
@@ -53,6 +54,7 @@ app.use(
 );
 
 // Middleware
+app.use(cors({origin: '*'}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
