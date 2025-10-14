@@ -690,9 +690,25 @@ router.get("/subscriptions", async (req, res) => {
       .populate("user", "name email phone")
       .sort({ createdAt: -1 })
 
+    // SSR fallback: compute last 6 months revenue for active subscriptions
+    const months = 6;
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+    const agg = await Subscription.aggregate([
+      { $match: { createdAt: { $gte: start }, status: "active" } },
+      { $group: { _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } }, total: { $sum: "$amount" } } },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ])
+
+    const monthlyRevenue = agg.map(({ _id, total }) => ({
+      month: `${_id.year}-${String(_id.month).padStart(2, "0")}`,
+      total
+    }))
+
     res.render("admin/subscriptions", {
       title: "Manage Subscriptions",
       subscriptions,
+      monthlyRevenue,
     })
   } catch (error) {
     console.error("Manage subscriptions error:", error)
@@ -1432,6 +1448,44 @@ router.get("/api/subscriptions", isAdmin, async (req, res) => {
   } catch (error) {
     console.error("Subscriptions API error:", error)
     res.status(500).json({ error: "Failed to load subscriptions data" })
+  }
+});
+
+// Subscriptions monthly revenue API
+router.get("/api/subscriptions/revenue", isAdmin, async (req, res) => {
+  try {
+    const months = Math.max(1, Math.min(24, Number(req.query.months) || 6));
+
+    // Compute start date months back from now
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+
+    // Aggregate subscription revenue by month based on creation time
+    const agg = await Subscription.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: start },
+          status: "active"
+        }
+      },
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+          total: { $sum: "$amount" }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+
+    const monthlyRevenue = agg.map(({ _id, total }) => ({
+      month: `${_id.year}-${String(_id.month).padStart(2, "0")}`,
+      total
+    }));
+
+    res.json({ monthlyRevenue });
+  } catch (error) {
+    console.error("Subscriptions revenue API error:", error);
+    res.status(500).json({ error: "Failed to load subscription revenue data" });
   }
 });
 
