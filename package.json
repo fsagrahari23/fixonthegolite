@@ -4,6 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
+    "dev":"start",
   "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit"
   },
   "keywords": [],
