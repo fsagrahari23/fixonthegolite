@@ -1,13 +1,13 @@
 {
   "name": "bike-assistance-system",
   "version": "1.0.0",
-  "description": "",
+  "description": "hii",
   "main": "app.js",
   "scripts": {
-  "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit"
+    "test": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit"
   },
   "keywords": [],
-  "author": "",
+  "author": "..",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -43,5 +43,16 @@
   "jest": {
     "testEnvironment": "node",
     "testTimeout": 30000
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fsagrahari23/fixonthegolite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fsagrahari23/fixonthegolite/issues"
+  },
+  "homepage": "https://github.com/fsagrahari23/fixonthegolite#readme"
 }

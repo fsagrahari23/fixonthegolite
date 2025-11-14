@@ -42,6 +42,8 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
+  console.log(process.env.MONGODB_URI)
+
 // Set up session with MongoDB store
 app.use(
   session({
@@ -116,6 +118,6 @@ require("./socket")(io);
 // Start server
 const PORT =  3001;
 server.listen(PORT, () => {
-
+  
   console.log(`Server running on http://localhost:${PORT}`);
 });
